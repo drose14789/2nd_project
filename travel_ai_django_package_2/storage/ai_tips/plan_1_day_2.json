@@ -1,0 +1,50 @@
+{
+  "signature": "74f0e161f8964d82b3668d3d8f755db8fbc1a95729182fb3367b3439483c004e",
+  "plan_id": 1,
+  "day_number": 2,
+  "city": "도쿄",
+  "bullets": [
+    "• 도쿄에서는 대중교통인 JR과 메트로를 이용하는 것이 효율적이며, IC 카드(Suica 또는 PASMO)를 미리 준비하는 것이 좋습니다. [2]",
+    "• 인기 있는 관광지나 식당은 혼잡할 수 있으니, 점심(12:00)과 저녁(18:00) 시간대를 피하는 것이 유리합니다. [2]",
+    "• 현금과 카드를 함께 준비하여, 현금이 필요한 장소에 대비하는 것이 안전합니다. [3]"
+  ],
+  "sources": [
+    {
+      "rank": 1,
+      "score": 14.0228,
+      "doc_id": "General",
+      "title": "General Travel Tips (Common)",
+      "snippet": "# General Travel Tips (Common) 이 문서는 **특정 도시가 아니라** 대부분의 여행지에서 공통으로 적용되는 실전 팁을 정리한 자료입니다. ## Transit / 이동 - Travel transit: 가능하면 **대중교통(지하철/버스)** 을 우선으로 두고, 구간이 길면 택시/라이드쉐어를 섞어 동선을 줄입니다. - Metro / train: 출퇴근(러시아워)에는 혼잡(crowd)이 심하므로 인기 구간은 시간을 살짝 피합니다. - Naviga…"
+    },
+    {
+      "rank": 2,
+      "score": 4.3478,
+      "doc_id": "Tokyo",
+      "title": "Tokyo",
+      "snippet": "Tokyo quick notes: - Popular areas: Shinjuku, Shibuya, Asakusa, Ginza, Akihabara. - Transit: JR + Metro; get an IC card (Suica/PASMO). - Food: ramen, sushi, izakaya; queue times peak at 12:00 and 18:00. - Tips: book observation decks, arrive early at temples,…"
+    },
+    {
+      "rank": 3,
+      "score": 3.6986,
+      "doc_id": "General",
+      "title": "General Travel Tips (Common)",
+      "snippet": ". - Cash / card: 현금이 필요한 곳이 있을 수 있어 **소액 현금 + 카드** 를 함께 준비합니다. ## Weather / 컨디션 - Weather: 비/더위/추위에 대비해 우산·물·레이어드 옷을 챙깁니다. - Break: 관광(Attraction/Landmark) 사이에 카페(Cafe)나 식사(Restaurant)를 끼워 넣어 휴식 시간을 확보합니다."
+    },
+    {
+      "rank": 4,
+      "score": 1.5583,
+      "doc_id": "Bangkok",
+      "title": "Bangkok",
+      "snippet": "Bangkok quick notes: - Popular areas: Grand Palace, Wat Pho, Chinatown, Siam, Chatuchak (weekend). - Transit: BTS/MRT; taxis can be slow due to traffic. - Food: street food is great; keep cash ready. - Tips: plan temples early, carry water, and leave buffer ti…"
+    },
+    {
+      "rank": 5,
+      "score": 1.5357,
+      "doc_id": "Paris",
+      "title": "Paris",
+      "snippet": "Paris quick notes: - Popular areas: Louvre, Eiffel Tower, Montmartre, Le Marais, Saint-Germain. - Transit: Metro is fast; beware of pickpockets in tourist hotspots. - Food: bistro lunch menus are often best value. - Tips: reserve museum slots in advance and pl…"
+    }
+  ],
+  "generated_at": "2026-02-10T04:21:53.864995Z",
+  "used_llm": true
+}

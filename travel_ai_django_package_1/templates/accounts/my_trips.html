@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}내 여행 | TravelAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🗓️ 내 여행</h2>
+    <a href="{% url 'planner:index' %}" class="btn btn-primary">+ 새 여행 계획</a>
+  </div>
+  
+  {% if travel_plans %}
+  <div class="row g-4">
+    {% for plan in travel_plans %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ plan.title }}</h5>
+          <p class="text-muted small mb-2">
+            {{ plan.start_date|date:"Y.n.j" }} ~ {{ plan.end_date|date:"Y.n.j" }}
+            ({{ plan.total_days }}일)
+          </p>
+          <div class="mb-3">
+            {% for dest in plan.destinations|slice:":3" %}
+            <span class="badge bg-light text-dark me-1">{{ dest.city }}</span>
+            {% endfor %}
+          </div>
+          <span class="badge bg-{% if plan.status == 'completed' %}success{% elif plan.status == 'ongoing' %}primary{% else %}secondary{% endif %}">
+            {{ plan.get_status_display }}
+          </span>
+        </div>
+        <div class="card-footer bg-white border-0">
+          <a href="{% url 'planner:results' plan.id %}" class="btn btn-outline-primary w-100">보기</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div class="fs-1 mb-3">✈️</div>
+    <h4>아직 여행 계획이 없어요</h4>
+    <p class="text-muted mb-4">새로운 여행을 계획해보세요!</p>
+    <a href="{% url 'planner:index' %}" class="btn btn-primary btn-lg">여행 계획하기</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

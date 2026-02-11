@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}프로필 | TravelAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-4">
+      <!-- 프로필 카드 -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body text-center p-4">
+          <div class="mb-3">
+            {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" class="rounded-circle" width="100" height="100" style="object-fit:cover;">
+            {% else %}
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:100px;height:100px;font-size:2.5rem;">
+              {{ user.username|first|upper }}
+            </div>
+            {% endif %}
+          </div>
+          <h4 class="mb-1">{{ user.username }}</h4>
+          <p class="text-muted mb-3">{{ user.email }}</p>
+          <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary btn-sm">프로필 수정</a>
+        </div>
+      </div>
+      
+      <!-- 통계 -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h6 class="card-title mb-3">📊 여행 통계</h6>
+          <div class="row g-2">
+            <div class="col-4 text-center">
+              <div class="fs-4 fw-bold text-primary">{{ user.total_trips }}</div>
+              <div class="small text-muted">여행</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="fs-4 fw-bold text-primary">{{ user.total_countries }}</div>
+              <div class="small text-muted">국가</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="fs-4 fw-bold text-primary">{{ user.total_cities }}</div>
+              <div class="small text-muted">도시</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 빠른 메뉴 -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-3">⚡ 빠른 메뉴</h6>
+          <div class="d-grid gap-2">
+            <a href="{% url 'accounts:preferences' %}" class="btn btn-outline-primary">🎯 여행 선호도 설정</a>
+            <a href="{% url 'accounts:visited_places' %}" class="btn btn-outline-secondary">📍 방문 기록</a>
+            <a href="{% url 'planner:index' %}" class="btn btn-primary">✈️ 새 여행 계획하기</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-8">
+      <!-- 최근 여행 -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">🗓️ 최근 여행</h5>
+          <a href="{% url 'accounts:my_trips' %}" class="btn btn-sm btn-outline-primary">전체보기</a>
+        </div>
+        <div class="card-body">
+          {% if travel_plans %}
+          <div class="list-group list-group-flush">
+            {% for plan in travel_plans %}
+            <a href="{% url 'planner:results' plan.id %}" class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">{{ plan.title }}</h6>
+                  <small class="text-muted">
+                    {{ plan.start_date }} ~ {{ plan.end_date }} ({{ plan.total_days }}일)
+                  </small>
+                </div>
+                <span class="badge bg-{{ plan.status|default:'secondary' }}">{{ plan.get_status_display }}</span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-center text-muted py-4 mb-0">
+            아직 여행 계획이 없어요.<br>
+            <a href="{% url 'planner:index' %}">새 여행을 계획해보세요!</a>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- 여행 선호도 요약 -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">🎯 나의 여행 선호도</h5>
+          <a href="{% url 'accounts:preferences' %}" class="btn btn-sm btn-outline-primary">수정</a>
+        </div>
+        <div class="card-body">
+          {% if preference %}
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded">
+                <div class="small text-muted">여행 스타일</div>
+                <div class="fw-bold">{{ preference.get_travel_style_display }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded">
+                <div class="small text-muted">예산</div>
+                <div class="fw-bold">{{ preference.get_budget_level_display }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded">
+                <div class="small text-muted">숙소</div>
+                <div class="fw-bold">{{ preference.get_accommodation_preference_display }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <h6 class="mb-3">선호도 점수</h6>
+            <div class="row g-2">
+              <div class="col-4">
+                <div class="d-flex align-items-center gap-2">
+                  <span>🏛️ 랜드마크</span>
+                  <div class="progress flex-grow-1" style="height:8px;">
+                    <div class="progress-bar" style="width:{{ preference.landmark_preference }}0%"></div>
+                  </div>
+                  <small>{{ preference.landmark_preference }}</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="d-flex align-items-center gap-2">
+                  <span>🍽️ 미식</span>
+                  <div class="progress flex-grow-1" style="height:8px;">
+                    <div class="progress-bar" style="width:{{ preference.food_preference }}0%"></div>
+                  </div>
+                  <small>{{ preference.food_preference }}</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="d-flex align-items-center gap-2">
+                  <span>🌿 자연</span>
+                  <div class="progress flex-grow-1" style="height:8px;">
+                    <div class="progress-bar" style="width:{{ preference.nature_preference }}0%"></div>
+                  </div>
+                  <small>{{ preference.nature_preference }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-center text-muted py-4 mb-0">
+            아직 여행 선호도를 설정하지 않았어요.<br>
+            <a href="{% url 'accounts:preferences' %}">설정하러 가기</a>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- 관심 도시 -->
+      {% if favorite_cities %}
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">❤️ 관심 도시</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for city in favorite_cities %}
+            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+              {{ city.city }}, {{ city.country }}
+              {% if city.visit_count > 1 %}
+              <small class="text-muted">({{ city.visit_count }}회)</small>
+              {% endif %}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

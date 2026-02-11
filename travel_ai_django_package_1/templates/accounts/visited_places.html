@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}방문 기록 | TravelAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="mb-4">📍 방문 기록</h2>
+  
+  <!-- 필터 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3">
+        <div class="col-md-3">
+          <select name="type" class="form-select">
+            <option value="">전체 타입</option>
+            <option value="Attraction" {% if place_type == 'Attraction' %}selected{% endif %}>관광지</option>
+            <option value="Restaurant" {% if place_type == 'Restaurant' %}selected{% endif %}>맛집</option>
+            <option value="Cafe" {% if place_type == 'Cafe' %}selected{% endif %}>카페</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="text" name="city" class="form-control" placeholder="도시 검색" value="{{ city|default:'' }}">
+        </div>
+        <div class="col-md-3">
+          <div class="form-check mt-2">
+            <input type="checkbox" name="liked" class="form-check-input" id="likedOnly" {% if liked_only %}checked{% endif %}>
+            <label class="form-check-label" for="likedOnly">좋아요만</label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary">필터</button>
+          <a href="{% url 'accounts:visited_places' %}" class="btn btn-outline-secondary">초기화</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  {% if places %}
+  <div class="row g-3">
+    {% for place in places %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <h6 class="card-title mb-1">{{ place.place_name }}</h6>
+            {% if place.liked %}
+            <span class="text-danger">❤️</span>
+            {% endif %}
+          </div>
+          <p class="text-muted small mb-2">{{ place.city }}, {{ place.country }}</p>
+          <div class="mb-2">
+            <span class="badge bg-light text-dark">{{ place.place_type }}</span>
+            {% if place.user_rating %}
+            <span class="badge bg-warning text-dark">⭐ {{ place.user_rating }}/5</span>
+            {% endif %}
+          </div>
+          {% if place.notes %}
+          <p class="small text-muted mb-0">{{ place.notes|truncatechars:50 }}</p>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-white small text-muted">
+          {% if place.visited_at %}
+          {{ place.visited_at|date:"Y.n.j" }} 방문
+          {% else %}
+          {{ place.created_at|date:"Y.n.j" }} 기록
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div class="fs-1 mb-3">📍</div>
+    <h4>아직 방문 기록이 없어요</h4>
+    <p class="text-muted">여행 후 방문한 장소를 기록해보세요!</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
