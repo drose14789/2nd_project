@@ -20,7 +20,7 @@
 	  <img src="https://img.shields.io/badge/Ridge-EB5424?style=for-the-badge&logoColor=white">
 	</div>
 	<div>
-	  <img src="https://img.shields.io/badge/Django-000000?style=for-the-badge&logo=flask&logoColor=white">
+	  <img src="https://img.shields.io/badge/Django-000000?style=for-the-badge&logo=djang&logoColor=white">
 	  <img src="https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white">
 	  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white">
 	  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white">
@@ -92,5 +92,5 @@
 *클릭하면 데모 영상을 볼 수 있습니다.*
 
 
-[![Demo](https://img.shields.io/badge/Demo-success?style=flat-square)](https://youtu.be/GZhJtxeNO4U)
-![Commits](https://img.shields.io/github/commit-activity/m/yisy0/test)
+[![Demo](https://img.shields.io/badge/Demo-success?style=flat-square)](https://www.youtube.com/watch?v=E3Ve6HJy064)
+![Commits](https://img.shields.io/github/commit-activity/m/drose14789/test)
