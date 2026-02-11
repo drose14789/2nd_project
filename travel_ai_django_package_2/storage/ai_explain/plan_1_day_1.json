@@ -1,0 +1,46 @@
+{
+  "signature": "13d2b1433d488dbb574a87cf4829d1517d2ffb4898f2595ff1e318c3c07e3f47",
+  "plan_id": 1,
+  "day_number": 1,
+  "city": "서울",
+  "text": "📍 오늘 일정(순서)\n🏨 숙소: 호텔미드시티명동 → 🗺️ Gyeongbokgung Palace → 🗺️ Bukchon Hanok Village → 🍽️ 853 → 🏨 숙소: 호텔미드시티명동\n\n🍽️ 맛집: 853\n🗺️ 관광: Gyeongbokgung Palace, Bukchon Hanok Village\n제공된 일정은 서울의 주요 관광지를 효율적으로 방문할 수 있도록 구성되어 있습니다. 첫 번째로, 경복궁은 서울의 역사적인 중심지로, 그 주변에 위치한 북촌 한옥마을로의 이동이 용이합니다. 경복궁을 관광한 후, 북촌 한옥마을에서 전통적인 한국 가옥을 감상하며 산책할 수 있습니다. \n\n이후 853에서 식사를 하며 휴식을 취한 후, 다시 숙소로 돌아오는 동선이 자연스럽고 효율적입니다. 이와 같은 순서는 관광 후 식사와 카페를 포함하여 여유롭게 일정을 구성할 수 있어, 여행의 피로를 덜어줍니다.\n\n실전 팁:\n- 대중교통을 이용하면 이동이 편리합니다. T-money 카드를 구입해 지하철과 버스를 이용하세요 [2].\n- 경복궁은 아침 일찍 방문하면 혼잡을 피할 수 있습니다 [1].\n- 북촌 한옥마을은 도보로 탐방하기에 적합하니 편한 신발을 착용하세요 [1].",
+  "sources": [
+    {
+      "rank": 1,
+      "score": 10.2721,
+      "doc_id": "General",
+      "title": "General Travel Tips (Common)",
+      "snippet": "# General Travel Tips (Common) 이 문서는 **특정 도시가 아니라** 대부분의 여행지에서 공통으로 적용되는 실전 팁을 정리한 자료입니다. ## Transit / 이동 - Travel transit: 가능하면 **대중교통(지하철/버스)** 을 우선으로 두고, 구간이 길면 택시/라이드쉐어를 섞어 동선을 줄입니다. - Metro / train: 출퇴근(러시아워)에는 혼잡(crowd)이 심하므로 인기 구간은 시간을 살짝 피합니다. - Naviga…"
+    },
+    {
+      "rank": 2,
+      "score": 9.1878,
+      "doc_id": "Seoul",
+      "title": "Seoul Travel Guide",
+      "snippet": "# Seoul Travel Guide Seoul is the vibrant capital of South Korea. Key attractions include Gyeongbokgung Palace, Bukchon Hanok Village, and N Seoul Tower. **Transportation**: Get a T-money card for subway, bus, and convenience store payments. The subway system…"
+    },
+    {
+      "rank": 3,
+      "score": 1.6662,
+      "doc_id": "Bangkok",
+      "title": "Bangkok",
+      "snippet": "Bangkok quick notes: - Popular areas: Grand Palace, Wat Pho, Chinatown, Siam, Chatuchak (weekend). - Transit: BTS/MRT; taxis can be slow due to traffic. - Food: street food is great; keep cash ready. - Tips: plan temples early, carry water, and leave buffer ti…"
+    },
+    {
+      "rank": 4,
+      "score": 1.2666,
+      "doc_id": "Paris",
+      "title": "Paris",
+      "snippet": "Paris quick notes: - Popular areas: Louvre, Eiffel Tower, Montmartre, Le Marais, Saint-Germain. - Transit: Metro is fast; beware of pickpockets in tourist hotspots. - Food: bistro lunch menus are often best value. - Tips: reserve museum slots in advance and pl…"
+    },
+    {
+      "rank": 5,
+      "score": 1.2666,
+      "doc_id": "Tokyo",
+      "title": "Tokyo",
+      "snippet": "Tokyo quick notes: - Popular areas: Shinjuku, Shibuya, Asakusa, Ginza, Akihabara. - Transit: JR + Metro; get an IC card (Suica/PASMO). - Food: ramen, sushi, izakaya; queue times peak at 12:00 and 18:00. - Tips: book observation decks, arrive early at temples,…"
+    }
+  ],
+  "generated_at": "2026-02-10T04:20:57.422198Z",
+  "used_llm": true
+}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}도시 히어로 이미지 도구 | TravelAI{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .tool-wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
+  .tool-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .tool-title{font-size:22px;font-weight:800;margin:0;}
+  .tool-desc{margin:6px 0 0;color:#64748b;font-size:14px;line-height:1.45;}
+  .tool-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid #cbd5e1;background:#fff;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;text-decoration:none;color:#0f172a;}
+  .btn.primary{border-color:#0ea5e9;background:#0ea5e9;color:#fff;}
+  .btn.warn{border-color:#f59e0b;background:#fff7ed;color:#92400e;}
+  .status{margin:10px 0 0;font-size:13px;color:#0f172a;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;}
+  @media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:640px){.grid{grid-template-columns:1fr;}}
+  .card{border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.06);}
+  .thumb{height:140px;background:#f1f5f9;}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .card-body{padding:12px 12px 14px;}
+  .meta{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .city{font-weight:900;}
+  .small{font-size:12px;color:#64748b;}
+  .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #cbd5e1;color:#334155;background:#f8fafc;}
+  .pill.ok{border-color:#86efac;background:#f0fdf4;color:#166534;}
+  .pill.miss{border-color:#fecaca;background:#fff1f2;color:#9f1239;}
+  .footer{margin-top:18px;color:#64748b;font-size:13px;}
+  code{background:#f1f5f9;padding:2px 6px;border-radius:8px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-wrap">
+  <div class="tool-head">
+    <div>
+      <h1 class="tool-title">🖼️ 도시 대표(히어로) 이미지 고정 도구</h1>
+      <p class="tool-desc">
+        버튼 한 번으로 <code>static/img/city_hero/</code> 폴더에 도시별 대표 이미지를 저장합니다.<br>
+        저장 후에는 검색을 다시 해도 카페/랜덤 이미지로 바뀌지 않고 고정됩니다.
+      </p>
+    </div>
+    <div class="tool-actions">
+      <button class="btn primary" id="btnRun">전체 도시 이미지 다운로드</button>
+      <button class="btn warn" id="btnForce">강제 재다운로드(덮어쓰기)</button>
+      <a class="btn" href="javascript:history.back()">← 돌아가기</a>
+    </div>
+  </div>
+
+  <div class="status" id="status">대기 중…</div>
+
+  <div class="grid">
+    {% for it in items %}
+    <div class="card">
+      <div class="thumb">
+        {% if it.exists %}
+          <img src="{{ it.url }}" alt="{{ it.city }}">
+        {% else %}
+          <img src="{% static 'img/placeholder.svg' %}" alt="missing">
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="meta">
+          <div>
+            <div class="city">{{ it.city }} <span class="small">({{ it.country }})</span></div>
+            <div class="small">{{ it.slug }} · {{ it.size }} bytes</div>
+          </div>
+          {% if it.exists and it.size >= 120000 %}
+            <div class="pill ok">OK</div>
+          {% else %}
+            <div class="pill miss">NEED</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="footer">
+    ※ 다운로드는 Wikimedia Commons 기반이며, 저장된 크레딧 정보는 <code>static/img/city_hero/credits.json</code>에 기록됩니다.
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function getCookie(name){
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const c = cookies[i].trim();
+      if (c.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(c.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+async function run(force){
+  const status = document.getElementById('status');
+  status.textContent = force ? '강제 재다운로드 중…' : '다운로드 중…';
+  const fd = new FormData();
+  if (force) fd.append('force','1');
+
+  const res = await fetch("{% url 'planner:city_hero_tool_run' %}", {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken')},
+    body: fd
+  });
+
+  const data = await res.json();
+  if (!data.ok){
+    status.textContent = '실패: ' + (data.error || 'unknown error');
+    return;
+  }
+
+  const s = data.summary;
+  status.textContent = `완료 ✅  total=${s.total}, ok=${s.ok}, downloaded=${s.downloaded}, skipped=${s.skipped}, errors=${s.errors}  (F5 새로고침하면 썸네일이 갱신됩니다)`;
+}
+
+document.getElementById('btnRun').addEventListener('click', ()=>run(false));
+document.getElementById('btnForce').addEventListener('click', ()=>run(true));
+</script>
+{% endblock %}

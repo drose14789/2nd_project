@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TravelAI PDF Export</title>
+  <style>
+    :root{
+      --bg:#f6f8ff;
+      --card:#ffffff;
+      --line:#dbe5f8;
+      --title:#101a33;
+      --muted:#5b667a;
+      --primary:#1a61eb;
+    }
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--title)}
+    .toolbar{position:sticky;top:0;background:rgba(246,248,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;z-index:20}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+    .note{font-size:13px;color:var(--muted);line-height:1.4}
+
+    /* 16:9 page canvas (for print-to-pdf) */
+    .page{width:1120px;height:630px;margin:18px auto;background:var(--bg);border-radius:22px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(17,24,39,.10);page-break-after:always}
+    .inner{position:absolute;inset:18px;border-radius:20px;background:rgba(255,255,255,.55);border:1px solid rgba(219,229,248,.9);overflow:hidden}
+
+    /* Cover */
+    .cover-wrap{position:absolute;inset:0;display:flex;align-items:center}
+    .cover-hero{position:absolute;inset:0;}
+    .cover-hero img{width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.02)}
+    .cover-fade{position:absolute;inset:0;background:linear-gradient(90deg, rgba(246,248,255,.95) 0%, rgba(246,248,255,.82) 42%, rgba(246,248,255,.40) 70%, rgba(246,248,255,.08) 100%)}
+    .cover-text{position:relative;padding:56px 64px;max-width:62%}
+    .cover-kicker{font-weight:800;color:#27456b;letter-spacing:.02em;opacity:.75}
+    .cover-title{font-weight:900;font-size:58px;letter-spacing:.02em;margin:10px 0 12px}
+    .cover-sub{font-size:18px;color:var(--muted);line-height:1.7}
+    .brand{position:absolute;left:48px;bottom:42px;display:flex;gap:10px;align-items:center;color:#41526a;font-weight:800}
+    .brand .dot{width:18px;height:18px;border-radius:6px;background:var(--primary);display:inline-block}
+
+    /* Day */
+    .day-head{padding:18px 22px;border-bottom:1px solid rgba(219,229,248,.95);display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.60)}
+    .day-pill{display:inline-flex;align-items:center;gap:8px;font-weight:900}
+    .pill{background:#e9f0ff;border:1px solid var(--line);color:#214c9b;border-radius:999px;padding:6px 12px;font-size:14px}
+    .day-meta{font-size:13px;color:var(--muted)}
+
+    .day-body{display:grid;grid-template-columns: 1.1fr 1.4fr;gap:18px;padding:18px 22px;height:calc(100% - 66px)}
+    .card{background:rgba(255,255,255,.75);border:1px solid rgba(219,229,248,.95);border-radius:18px;overflow:hidden}
+    .list{padding:16px 16px 10px}
+    .poi{display:flex;gap:10px;align-items:flex-start;padding:10px 10px;border-radius:14px}
+    .poi + .poi{border-top:1px dashed rgba(219,229,248,.95)}
+    .badge{width:10px;height:10px;border-radius:3px;background:var(--primary);margin-top:6px;flex:0 0 auto}
+    .poi-title{font-weight:900}
+    .poi-sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+    .map{position:relative;background:#fff}
+    .map img{width:100%;height:100%;object-fit:cover}
+    .map-fade{position:absolute;inset:0;background:radial-gradient(circle at 15% 15%, rgba(255,255,255,.15) 0, rgba(255,255,255,0) 50%), linear-gradient(180deg, rgba(246,248,255,.0) 0, rgba(246,248,255,.25) 100%)}
+
+    /* Hotel block (B): thumb left + stacked text right */
+    .hotel-row{padding:12px 16px;border-top:1px solid rgba(219,229,248,.95);display:flex;gap:12px;align-items:center}
+    .hotel-thumb{width:120px;height:78px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:#fff;border:1px solid rgba(219,229,248,.95)}
+    .hotel-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .hotel-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+    .hotel-name{font-weight:900;color:var(--title);font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hotel-addr{font-size:12px;color:var(--muted);line-height:1.35;max-height:32px;overflow:hidden}
+    .hotel-meta{font-size:12px;color:var(--muted);font-weight:700}
+
+    /* Summary */
+    .summary-head{padding:18px 22px;border-bottom:1px solid rgba(219,229,248,.95);background:rgba(255,255,255,.60);font-size:26px;font-weight:900}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px 18px}
+    .sum-card{background:rgba(255,255,255,.80);border:1px solid rgba(219,229,248,.95);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+    .sum-img{height:130px;position:relative}
+    .sum-img img{width:100%;height:100%;object-fit:cover}
+    .sum-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.30) 0, rgba(0,0,0,0) 55%)}
+    .sum-top{position:absolute;left:12px;top:10px;color:#fff;font-weight:900}
+    .sum-body{padding:10px 12px}
+    .sum-title{font-weight:900}
+    .sum-sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .sum-list{margin:10px 0 0;padding:0;list-style:none}
+    .sum-list li{font-size:12px;color:var(--muted);padding:6px 0;border-top:1px dashed rgba(219,229,248,.95)}
+
+    .sum-hotel{margin-top:10px;padding-top:10px;border-top:1px solid rgba(219,229,248,.95);display:flex;gap:10px;align-items:center}
+    .sum-hotel .t{width:64px;height:46px;border-radius:10px;overflow:hidden;flex:0 0 auto;background:#fff;border:1px solid rgba(219,229,248,.95)}
+    .sum-hotel .t img{width:100%;height:100%;object-fit:cover;display:block}
+    .sum-hotel .info{min-width:0}
+    .sum-hotel .nm{font-weight:900;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sum-hotel .mt{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
+
+    @media print{
+      body{background:#fff}
+      .toolbar{display:none}
+      .page{margin:0;box-shadow:none;border-radius:0;page-break-after:always}
+      .inner{border:0;border-radius:0}
+      @page{size: landscape; margin: 0;}
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="btn primary" onclick="window.print()">인쇄/저장 (PDF)</button>
+    {% if reportlab_missing %}
+      <div class="note">
+        현재 가상환경에 <b>reportlab</b>이 설치되어 있지 않아, 다운로드 대신 <b>인쇄 → PDF 저장</b> 화면으로 열렸어요.<br>
+        한 번만 설치하면 버튼 클릭 시 바로 PDF 파일로 내려받을 수 있어요: <code>pip install reportlab</code> 또는 <code>pip install -r requirements.txt</code>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ============ Cover ============ #}
+  {% with first=day_plans|first %}
+  <section class="page">
+    <div class="inner">
+      <div class="cover-wrap">
+        <div class="cover-hero">
+          {% if first and first.hero_image_url %}
+            <img src="{{ first.hero_image_url }}" alt="hero" />
+          {% else %}
+            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1600&q=80" alt="hero" />
+          {% endif %}
+        </div>
+        <div class="cover-fade"></div>
+        <div class="cover-text">
+          <div class="cover-kicker">— TravelAI —</div>
+          <div class="cover-title">TRAVEL ITINERARY</div>
+          <div class="cover-sub">
+            {{ plan.start_date }} ~ {{ plan.end_date }}<br>
+            {% if plan.destinations %}
+              {% for d in plan.destinations %}{{ d.city }}{% if not forloop.last %} · {% endif %}{% endfor %}
+            {% endif %}
+          </div>
+        </div>
+        <div class="brand"><span class="dot"></span>TravelAI</div>
+      </div>
+    </div>
+  </section>
+  {% endwith %}
+
+  {# ============ Day pages ============ #}
+  {% for dp in day_plans %}
+    <section class="page">
+      <div class="inner">
+        <div class="day-head">
+          <div class="day-pill">
+            <span class="pill">Day {{ dp.day_number }}</span>
+            <span style="font-size:22px; font-weight:900">{{ dp.to_city }}</span>
+            <span class="day-meta">{{ dp.date }}{% if dp.weekday %} | {{ dp.weekday }}{% endif %}</span>
+          </div>
+          <div class="day-meta">{{ dp.to_country }}</div>
+        </div>
+
+        <div class="day-body">
+          <div class="card">
+            <div class="list">
+              {% for poi in dp.pois.all|slice:MAX_POIS_PER_DAY %}
+                <div class="poi">
+                  <span class="badge"></span>
+                  <div>
+                    <div class="poi-title">
+                      {{ poi.name }}
+                      {% if poi.is_landmark %}<span style="margin-left:8px; font-size:12px; font-weight:900; color:#1a61eb">LANDMARK</span>{% endif %}
+                      {% if poi.michelin_grade %}<span style="margin-left:6px; font-size:12px; font-weight:900; color:#0ea5e9">MICHELIN</span>{% endif %}
+                    </div>
+                    <div class="poi-sub">
+                      {{ poi.get_poi_type_display }}
+                      {% if poi.rating %} · ★ {{ poi.rating }}{% endif %}
+                      {% if poi.review_count %} · 리뷰 {{ poi.review_count }}{% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div style="padding:16px;color:var(--muted)">선택된 장소가 없습니다.</div>
+              {% endfor %}
+            </div>
+
+            <div class="hotel-row">
+              {% if dp.hotel_view and dp.hotel_view.name %}
+                <div class="hotel-thumb">
+                  {% if dp.hotel_view.photo_url %}
+                    <img src="{{ dp.hotel_view.photo_url }}" alt="hotel" />
+                  {% endif %}
+                </div>
+                <div class="hotel-info">
+                  <div class="hotel-name">{{ dp.hotel_view.name }}</div>
+                  {% if dp.hotel_view.addr_line1 %}
+                    <div class="hotel-addr">
+                      {{ dp.hotel_view.addr_line1 }}
+                      {% if dp.hotel_view.addr_line2 %}<br>{{ dp.hotel_view.addr_line2 }}{% endif %}
+                    </div>
+                  {% endif %}
+                  <div class="hotel-meta">
+                    {% if dp.hotel_view.rating %}★ {{ dp.hotel_view.rating }}{% endif %}
+                    {% if dp.hotel_view.reviews %} · 리뷰 {{ dp.hotel_view.reviews }}{% endif %}
+                    {% if dp.hotel_view.distance_km %} · {{ dp.hotel_view.distance_km }}km{% endif %}
+                  </div>
+                </div>
+              {% else %}
+                <div style="color:var(--muted);font-weight:800">🏨 숙소 미선택</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card map">
+            {% if dp.route_map_url %}
+              <img src="{{ dp.route_map_url }}" alt="map" />
+            {% elif dp.hero_image_url %}
+              <img src="{{ dp.hero_image_url }}" alt="hero" />
+            {% else %}
+              <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1600&q=80" alt="map" />
+            {% endif %}
+            <div class="map-fade"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endfor %}
+
+  {# ============ Summary pages (4 days per page) ============ #}
+  {% if day_plans %}
+    {% for dp in day_plans %}
+      {% if forloop.first or forloop.counter0|divisibleby:4 %}
+        <section class="page">
+          <div class="inner">
+            <div class="summary-head">Summary of the Trip</div>
+            <div class="summary-grid">
+      {% endif %}
+
+      <div class="sum-card">
+        <div class="sum-img">
+          {% if dp.hero_image_url %}
+            <img src="{{ dp.hero_image_url }}" alt="city" />
+          {% else %}
+            <img src="https://images.unsplash.com/photo-1496307653780-42ee777d4833?auto=format&fit=crop&w=800&q=80" alt="city" />
+          {% endif %}
+          <div class="sum-overlay"></div>
+          <div class="sum-top">Day {{ dp.day_number }}</div>
+        </div>
+        <div class="sum-body">
+          <div class="sum-title">{{ dp.to_city }}</div>
+          <div class="sum-sub">{{ dp.date }}</div>
+          <ul class="sum-list">
+            {% for poi in dp.pois.all|slice:3 %}
+              <li>{{ poi.name }}</li>
+            {% endfor %}
+          </ul>
+          {% if dp.hotel_view and dp.hotel_view.name %}
+            <div class="sum-hotel">
+              <div class="t">
+                {% if dp.hotel_view.photo_url %}<img src="{{ dp.hotel_view.photo_url }}" alt="hotel" />{% endif %}
+              </div>
+              <div class="info">
+                <div class="nm">{{ dp.hotel_view.name }}</div>
+                <div class="mt">
+                  {% if dp.hotel_view.rating %}★ {{ dp.hotel_view.rating }}{% endif %}
+                  {% if dp.hotel_view.reviews %} · 리뷰 {{ dp.hotel_view.reviews }}{% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if forloop.last or forloop.counter|divisibleby:4 %}
+            </div>
+          </div>
+        </section>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <script>
+    // 다운로드 버튼처럼 바로 쓰기 편하게: 페이지가 열리면 바로 인쇄창을 띄웁니다.
+    // (원치 않으면 아래 줄을 지워도 됩니다)
+    window.addEventListener('load', () => {
+      try { window.print(); } catch (e) {}
+    });
+  </script>
+</body>
+</html>

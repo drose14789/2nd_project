@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ plan.title }} | TravelAI{% endblock %}
+
+{% block extra_styles %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0ea5e9;
+  --primary-dark: #0284c7;
+  --primary-light: #7dd3fc;
+  --accent: #f59e0b;
+  --accent-light: #fcd34d;
+  --dark: #0c4a6e;
+  --gray-50: #f0f9ff;
+  --gray-100: #e0f2fe;
+  --gray-200: #bae6fd;
+  --gray-400: #38bdf8;
+  --gray-600: #0369a1;
+  --white: #ffffff;
+  --gradient-hero: linear-gradient(135deg, #0c4a6e 0%, #0369a1 40%, #0ea5e9 100%);
+  --gradient-card: linear-gradient(180deg, rgba(14,165,233,0.08) 0%, rgba(255,255,255,0) 100%);
+}
+
+* { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+body {
+  background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 50%);
+  min-height: 100vh;
+}
+
+/* Hero Header - Ocean Wave Style */
+.plan-hero {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 60px 0 100px;
+  position: relative;
+  overflow: hidden;
+}
+.plan-hero::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 100'%3E%3Cpath fill='%23f0f9ff' d='M0,50 C360,100 1080,0 1440,50 L1440,100 L0,100 Z'/%3E%3C/svg%3E") no-repeat bottom;
+  background-size: cover;
+}
+.plan-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(125,211,252,0.3) 0%, transparent 70%);
+  transform: translate(30%, -30%);
+}
+.plan-hero .container { position: relative; z-index: 2; }
+
+.plan-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  margin-bottom: 12px;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  letter-spacing: -0.02em;
+}
+.plan-meta {
+  font-size: 16px;
+  opacity: .9;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.dest-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.dest-chip {
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.35);
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+}
+.dest-chip:hover {
+  background: rgba(255,255,255,.3);
+  transform: translateY(-2px);
+}
+
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.btn-hero {
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+}
+.btn-hero.primary {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.btn-hero.primary:hover { 
+  transform: translateY(-3px) scale(1.02); 
+  box-shadow: 0 12px 35px rgba(0,0,0,.25);
+  color: var(--primary-dark);
+}
+.btn-hero.secondary {
+  background: rgba(255,255,255,.15);
+  color: white;
+  border: 2px solid rgba(255,255,255,.4);
+  backdrop-filter: blur(10px);
+}
+.btn-hero.secondary:hover { 
+  background: rgba(255,255,255,.25);
+  border-color: rgba(255,255,255,.6);
+  color: white;
+}
+
+/* Stats Bar - Floating Cards */
+.stats-bar {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(14,165,233,.15), 0 10px 30px rgba(0,0,0,.08);
+  margin-top: -50px;
+  position: relative;
+  z-index: 10;
+  padding: 30px 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  border: 1px solid rgba(14,165,233,.1);
+}
+@media (max-width: 768px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 20px; }
+}
+.stat-item { 
+  text-align: center;
+  padding: 10px;
+  border-radius: 16px;
+  transition: all 0.3s;
+}
+.stat-item:hover {
+  background: var(--gray-50);
+  transform: scale(1.05);
+}
+.stat-num {
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+.stat-label { 
+  font-size: 13px; 
+  color: var(--gray-600); 
+  margin-top: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Day Cards Grid */
+.days-section { 
+  padding: 60px 0;
+  background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+}
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-light), transparent);
+  border-radius: 3px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
+}
+
+.day-card {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(14,165,233,.08), 0 1px 3px rgba(0,0,0,.04);
+  transition: all .4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(14,165,233,.08);
+  position: relative;
+}
+.day-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-card);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 1;
+}
+.day-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 24px 60px rgba(14,165,233,.18), 0 8px 20px rgba(0,0,0,.08);
+}
+.day-card:hover::before { opacity: 1; }
+
+.day-card-image {
+  position: relative;
+  height: 200px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  overflow: hidden;
+}
+.day-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.day-card:hover .day-card-image img {
+  transform: scale(1.08);
+}
+.day-card-image .placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+.day-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: white;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--primary-dark);
+  box-shadow: 0 4px 15px rgba(0,0,0,.15);
+  z-index: 2;
+}
+.transport-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  padding: 8px 14px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 15px rgba(245,158,11,.3);
+  z-index: 2;
+}
+
+.day-card-body { 
+  padding: 24px;
+  position: relative;
+  z-index: 2;
+}
+.day-card-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+.day-card-date {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+/* POI Mini Badges */
+.poi-minis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.poi-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  transition: all 0.2s;
+}
+.poi-mini:hover { transform: translateY(-1px); }
+.poi-mini.landmark {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+.poi-mini.michelin {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+.poi-mini.restaurant {
+  background: #fef3c7;
+  color: #b45309;
+}
+.poi-mini.cafe {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.day-card-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  text-align: center;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(14,165,233,.25);
+}
+.day-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(14,165,233,.4);
+  color: white;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 60px 0 80px;
+  background: white;
+}
+.cta-card {
+  background: var(--gradient-hero);
+  border-radius: 32px;
+  padding: 50px;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(14,165,233,.3);
+}
+.cta-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.cta-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(125,211,252,0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.cta-title { 
+  font-size: 1.75rem; 
+  font-weight: 900; 
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+.cta-desc { 
+  opacity: .9; 
+  margin-bottom: 28px;
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+}
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  color: var(--primary-dark);
+  padding: 16px 36px;
+  border-radius: 50px;
+  font-weight: 900;
+  font-size: 15px;
+  text-decoration: none;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  position: relative;
+  z-index: 1;
+}
+.cta-btn:hover { 
+  transform: translateY(-3px) scale(1.03); 
+  box-shadow: 0 15px 45px rgba(0,0,0,.25);
+  color: var(--primary-dark);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--gray-600);
+}
+.empty-icon { font-size: 5rem; margin-bottom: 20px; }
+.empty-title { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<section class="plan-hero">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="plan-title">{{ plan.title }}</h1>
+        <p class="plan-meta">
+          📅 {{ plan.start_date|date:"Y년 n월 j일" }} ~ {{ plan.end_date|date:"Y년 n월 j일" }} · {{ plan.total_days }}일간의 여행
+        </p>
+        <div class="dest-chips">
+          {% for dest in plan.destinations %}
+          <span class="dest-chip">📍 {{ dest.city }}{% if dest.country %}, {{ dest.country }}{% endif %}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="hero-actions justify-content-lg-end">
+          {% if day_plans %}
+          <a href="{% url 'planner:itinerary' plan.id 1 %}" class="btn-hero primary">🚀 Day 1 시작</a>
+          {% endif %}
+          <a href="{% url 'planner:export_pdf' plan.id %}" class="btn-hero primary">📄 PDF 다운로드</a>
+          <a href="{% url 'planner:export_ppt' plan.id %}" class="btn-hero secondary">📑 PPT(옵션)</a>
+          <a href="{% url 'planner:index' %}" class="btn-hero secondary">✏️ 새 여행</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">{{ plan.total_days }}</div>
+      <div class="stat-label">총 일수</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{ plan.destinations|length }}</div>
+      <div class="stat-label">방문 도시</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="totalPois">0</div>
+      <div class="stat-label">총 장소</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{ plan.travelers_count }}</div>
+      <div class="stat-label">여행 인원</div>
+    </div>
+  </div>
+</div>
+
+<!-- Day Cards -->
+<section class="days-section">
+  <div class="container">
+    <h2 class="section-title">📅 일정 상세</h2>
+
+    {% if day_plans %}
+    <div class="days-grid">
+      {% for day in day_plans %}
+      <div class="day-card">
+        <div class="day-card-image">
+          {% if day.hero_image_url %}
+          <img src="{{ day.hero_image_url }}" alt="{{ day.to_city }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="placeholder" style="display:none;">🌊</div>
+          {% else %}
+          <div class="placeholder">🌊</div>
+          {% endif %}
+          <span class="day-badge">Day {{ day.day_number }}</span>
+          {% if day.transport_from_prev and day.from_city and day.from_city != day.to_city %}
+          <span class="transport-badge">
+            {% if "비행" in day.transport_from_prev %}✈️{% else %}🚆{% endif %}
+            {{ day.from_city }} → {{ day.to_city }}
+          </span>
+          {% endif %}
+        </div>
+        
+        <div class="day-card-body">
+          <h3 class="day-card-title">
+            {{ day.to_city }}
+            {% if day.to_country %}<small class="text-muted" style="font-size:.7em; font-weight:600;">{{ day.to_country }}</small>{% endif %}
+          </h3>
+          <p class="day-card-date">📅 {{ day.date|date:"n월 j일" }} ({{ day.date|date:"l" }})</p>
+          
+          <div class="poi-minis">
+            {% for poi in day.pois.all|slice:":5" %}
+            <span class="poi-mini {% if poi.is_landmark %}landmark{% elif poi.michelin_grade %}michelin{% elif poi.poi_type == 'Restaurant' %}restaurant{% elif poi.poi_type == 'Cafe' %}cafe{% endif %}">
+              {% if poi.is_landmark %}🏛️{% elif poi.michelin_grade %}🏆{% elif poi.poi_type == 'Restaurant' %}🍴{% elif poi.poi_type == 'Cafe' %}☕{% else %}📍{% endif %}
+              {{ poi.name|truncatechars:10 }}
+            </span>
+            {% empty %}
+            <span class="text-muted small">아직 추가된 장소가 없어요</span>
+            {% endfor %}
+            {% if day.pois.count > 5 %}<span class="poi-mini">+{{ day.pois.count|add:"-5" }}</span>{% endif %}
+          </div>
+          
+          <a href="{% url 'planner:itinerary' plan.id day.day_number %}" class="day-card-btn">상세 일정 보기 →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🌊</div>
+      <div class="empty-title">일정이 없습니다</div>
+      <p>여행 일정을 다시 생성해주세요.</p>
+      <a href="{% url 'planner:index' %}" class="btn btn-primary mt-3">새 여행 계획</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- CTA Section -->
+{% if day_plans %}
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card">
+      <h3 class="cta-title">🌊 여행 계획이 완성되었어요!</h3>
+      <p class="cta-desc">Day 1부터 순서대로 숙소 선택, 루트 조정을 진행하거나 PDF로 저장하세요.</p>
+      <a href="{% url 'planner:export_pdf' plan.id %}" class="cta-btn">📄 PDF 다운로드</a>
+      <a href="{% url 'planner:export_ppt' plan.id %}" class="cta-btn" style="margin-left:10px;">📑 PPT 다운로드</a>
+      <a href="{% url 'planner:city_hero_tool' %}" class="cta-btn" style="margin-left:10px;background:#111827;border-color:#111827;">🖼️ 도시 대표 이미지 고정</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let total = 0;
+  {% for day in day_plans %}total += {{ day.pois.count }};{% endfor %}
+  document.getElementById('totalPois').textContent = total;
+});
+</script>
+{% endblock %}

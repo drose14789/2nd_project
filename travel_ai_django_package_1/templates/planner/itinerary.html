@@ -1,0 +1,2651 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Day {{ day }} - {{ day_plan.to_city }} | TravelAI</div>
+{% endblock %}
+
+{% block extra_styles %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.day-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  padding: 40px 0;
+}
+.day-header h1 { font-size: 1.8rem; font-weight: 700; }
+
+/* Day meta (date/flight) - shown inside the Stepper card */
+.day-meta-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+.day-meta-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  color:#0f172a;            /* ✅ text readable on light bg */
+  font-weight:700;
+  font-size:13px;
+  line-height:1;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.06);
+}
+@media (max-width: 768px){
+  .day-header{ padding: 26px 0; }
+  .day-header h1{ font-size: 1.45rem; }
+  .day-meta-chip{ font-size: 12px; padding: 7px 10px; }
+}
+
+
+/* POI Item */
+.poi-item {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.poi-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.poi-item.dragging { opacity: 0.5; }
+.poi-number {
+  width: 32px;
+  height: 32px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.poi-image {
+  width: 90px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+.poi-image-placeholder {
+  width: 90px;
+  height: 70px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+.poi-info { flex: 1; min-width: 0; }
+.poi-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: #1e293b; }
+.poi-feature { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+.poi-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Badges */
+.poi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.poi-badge.attraction { background: #dbeafe; color: #1e40af; }
+.poi-badge.restaurant { background: #fef3c7; color: #92400e; }
+.poi-badge.cafe { background: #d1fae5; color: #065f46; }
+.poi-badge.landmark { background: linear-gradient(135deg, #059669, #047857); color: white; }
+.poi-badge.michelin { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; }
+
+    .michelin-inline {
+      display:inline-block;
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid rgba(220,38,38,0.25);
+      background: rgba(220,38,38,0.08);
+      color:#b91c1c;
+      font-weight:800;
+      line-height:1;
+    }
+
+
+.poi-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+.btn-icon.remove { background: #f1f5f9; color: #64748b; }
+.btn-icon.remove:hover { background: #fee2e2; color: #dc2626; }
+
+/* Sidebar */
+.sidebar-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.sidebar-card .card-header {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 18px;
+  font-weight: 600;
+}
+.sidebar-card .card-body { padding: 18px; }
+
+/* Map */
+#routeMap {
+  height: 460px;
+  border-radius: 16px;
+}
+
+@media (max-width: 992px) {
+  #routeMap { height: 320px; }
+}
+
+/* Stepper (Flask 버전 UX) */
+.stepper-card{
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 14px 16px;
+  margin-top: -18px;
+  margin-bottom: 18px;
+}
+.stepper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.step {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 2px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 12px;
+  color: #475569;
+  background: #ffffff;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.step:hover{ transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.10); }
+.step.done{ border-color: rgba(5,150,105,.35); color: #065f46; background: rgba(5,150,105,.06); }
+.step.active{ border-color: rgba(79,70,229,.55); color: #312e81; background: rgba(79,70,229,.08); }
+
+/* POI Candidate Card */
+.poi-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.poi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+.poi-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+.poi-card .img-placeholder {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+.poi-card .card-body { padding: 12px; }
+.poi-card h6 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   Transit(교통보기) UI hotfix - magazine style (UI only)
+   - 기능/JS/엔드포인트 변경 없음
+   ========================================================= */
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --accent:#f59e0b;
+  --dark:#0f172a;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-400:#94a3b8;
+  --gray-600:#475569;
+  --success:#10b981;
+}
+
+#routeSummary{ font-size:13px; color: var(--gray-600); }
+.rs-wrap{ display:block; }
+.rs-provider{ font-size:12px; color: var(--gray-400); margin-bottom:10px; }
+.rs-list{ display:flex; flex-direction:column; gap:10px; }
+.rs-seg{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  background: var(--gray-50);
+  border:1px solid var(--gray-200);
+  border-radius:14px;
+}
+.rs-left{ min-width:0; flex:1; }
+.rs-fromto{
+  font-weight:800;
+  color: var(--dark);
+  font-size:13px;
+  line-height:1.35;
+  word-break: keep-all;
+}
+.rs-meta{
+  margin-top:4px;
+  font-size:12px;
+  color: var(--gray-600);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+.rs-muted{ color: var(--gray-400); font-weight:700; }
+.rs-transit-btn{
+  border:1px solid rgba(99,102,241,.35);
+  background: rgba(99,102,241,.08);
+  color: var(--primary-dark);
+  font-weight:900;
+  font-size:12px;
+  padding:8px 10px;
+  border-radius: 12px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+}
+.rs-transit-btn:hover{
+  background: rgba(99,102,241,.14);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.10);
+}
+.rs-total{
+  display:flex;
+  justify-content:space-between;
+  padding-top:10px;
+  border-top:1px dashed var(--gray-200);
+  margin-top:12px;
+  font-size:12px;
+}
+.rs-total .t-label{ color: var(--gray-400); font-weight:800; }
+.rs-total .t-value{ color: var(--dark); font-weight:900; }
+
+#transitModal .modal-content{
+  border-radius: 18px;
+  overflow:hidden;
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+}
+#transitModal .modal-header{
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+  color:white;
+  border-bottom:none;
+}
+#transitModal .modal-title{ font-weight:900; font-size:15px; }
+#transitModal .btn-close{ filter: invert(1) grayscale(1) brightness(2); opacity:.9; }
+#transitModal .modal-footer{ border-top:1px solid rgba(226,232,240,.7); background: var(--gray-50); }
+
+.tr-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius: 999px;
+  background: rgba(99,102,241,.10);
+  border:1px solid rgba(99,102,241,.22);
+  color: var(--primary-dark);
+  font-weight:900;
+  font-size:12px;
+}
+.tr-steps{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+.tr-step{
+  display:flex;
+  gap:12px;
+  padding:12px 14px;
+  border-radius: 14px;
+  background: white;
+  border:1px solid var(--gray-200);
+}
+.tr-ico{
+  width:38px;
+  height:38px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+  background: var(--gray-50);
+  border:1px solid var(--gray-200);
+}
+.tr-ico.walk{ background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.25); }
+.tr-ico.transit{ background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.25); }
+.tr-title{ font-weight:900; color: var(--dark); font-size:13px; }
+.tr-sub{ margin-top:3px; font-size:12px; color: var(--gray-600); line-height:1.55; }
+.tr-empty{ padding: 8px 0; color: var(--gray-600); font-size: 13px; }
+
+/* =========================================================
+   Hotel Card UI - 숙소 카드 스타일
+   ========================================================= */
+.hotel-section {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.hotel-section-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.hotel-section-title {
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hotel-section-badge {
+  background: rgba(255,255,255,0.25);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.hotel-section-body { padding: 18px; }
+
+/* Selected Hotel Display */
+.selected-hotel {
+  background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03));
+  border: 2px solid rgba(245,158,11,0.25);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.selected-hotel-inner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.selected-hotel-img {
+  width: 120px;
+  height: 90px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+.selected-hotel-placeholder {
+  width: 120px;
+  height: 90px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+.selected-hotel-info { flex: 1; min-width: 0; }
+.selected-hotel-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+.selected-hotel-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef3c7;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+}
+.selected-hotel-addr {
+  font-size: 12px;
+  color: var(--gray-600);
+  margin-top: 6px;
+}
+.selected-hotel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+/* Hotel Cards Grid */
+.hotel-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 992px) {
+  .hotel-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px) {
+  .hotel-cards-grid { grid-template-columns: 1fr; }
+}
+
+.hotel-card {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.hotel-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.hotel-card.selected {
+  border-color: #10b981;
+  background: rgba(16,185,129,0.03);
+}
+.hotel-card-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+.hotel-card-placeholder {
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+}
+.hotel-card-body { padding: 12px; }
+.hotel-card-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.hotel-card-rating {
+  font-size: 12px;
+  color: #f59e0b;
+  font-weight: 700;
+}
+.hotel-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.hotel-price {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 600;
+  background: rgba(16,185,129,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.hotel-dist {
+  font-size: 11px;
+  color: #6366f1;
+  font-weight: 600;
+  background: rgba(99,102,241,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.hotel-card-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hotel-card-btn.select {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+}
+.hotel-card-btn.select:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+}
+.hotel-card-btn.selected {
+  background: #d1fae5;
+  color: #065f46;
+  cursor: default;
+}
+
+.hotel-more-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 2px dashed var(--gray-300);
+  border-radius: 12px;
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hotel-more-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(99,102,241,0.05);
+}
+
+/* Hotel Modal */
+#hotelModal .modal-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+}
+#hotelModal .modal-body { max-height: 70vh; overflow-y: auto; }
+.hotel-search-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.hotel-search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 14px;
+}
+.hotel-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.hotel-search-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hotel-tab-content { min-height: 300px; }
+.hotel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--gray-600);
+}
+.hotel-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+.hotel-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray-600);
+}
+.hotel-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+
+
+/* === Design1: 마지막 Day 결과 미리보기(카드 그리드) === */
+.d1-preview-grid .d1-preview-card{
+  background: var(--d1-card);
+  border: 1px solid rgba(226, 232, 240, .95);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: var(--d1-shadow);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.d1-preview-grid .d1-preview-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, .14);
+}
+.d1-preview-hero{
+  position: relative;
+  height: 180px;
+  background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+}
+.d1-preview-hero img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.d1-preview-hero.no-img img{ display:none; }
+.d1-preview-hero-fallback{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);
+  color: #fff;
+}
+.d1-preview-hero-fallback-text{
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.d1-preview-hero-fallback-sub{
+  font-size: 13px;
+  opacity: .92;
+}
+.d1-preview-badges{
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.d1-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .06);
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+@media (max-width: 576px){
+  .d1-preview-hero{ height: 150px; }
+}
+
+.ai-explain-card{
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.06);
+}
+.ai-explain-body{
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-size: 14px;
+  color: #0f172a;
+}
+.ai-explain-sources{
+  margin-top: 10px;
+  font-size: 12px;
+  color: #475569;
+}
+.ai-explain-sources .src{
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  margin-top: 6px;
+}
+.ai-explain-stale{
+  color:#b45309;
+  font-size: 12px;
+  font-weight: 700;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="day-page">
+<!-- Header -->
+<section class="day-header">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <a href="{% url 'planner:results' plan.id %}" class="text-decoration-none text-muted small">← 전체 일정으로</a>
+        <h1 class="day-title mb-1 mt-2"><span class="day-title-day">Day {{ day }}</span><span class="day-title-sep">·</span><span class="day-title-city">{{ day_plan.to_city }}</span></h1>
+      </div>
+      {# 네비게이션은 아래 Stepper 카드에서 통일 #}
+    </div>
+  </div>
+</section>
+
+<!-- Stepper (Flask 버전처럼 Day 1부터 스텝바이스텝 이동) -->
+<div class="container">
+  <div class="stepper-card">
+
+    <div class="day-meta-wrap mb-2">
+      <div class="day-meta-chip">📅 {{ day_plan.date|date:"Y년 n월 j일" }}</div>
+
+      {% if day_plan.from_city and day_plan.from_city != day_plan.to_city %}
+        {% if day_plan.transport_from_prev and "비행" in day_plan.transport_from_prev %}
+          <div class="day-meta-chip">✈️ {{ day_plan.from_city }} → {{ day_plan.to_city }}{% if day_plan.transport_duration %} · {{ day_plan.transport_duration }}{% endif %}</div>
+        {% else %}
+          <div class="day-meta-chip">🚆 {{ day_plan.from_city }} → {{ day_plan.to_city }}{% if day_plan.transport_duration %} · {{ day_plan.transport_duration }}{% endif %}</div>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="small text-muted">스텝바이스텝으로 Day를 이동하면서 일정 선택을 진행해요.</div>
+      <div class="d-flex gap-2">
+        {% if day > 1 %}<a href="{% url 'planner:itinerary' plan.id day|add:'-1' %}" class="btn btn-outline-secondary btn-sm">← 이전</a>{% endif %}
+        {% if day < total_days %}<a href="{% url 'planner:itinerary' plan.id day|add:'1' %}" class="btn btn-outline-secondary btn-sm">다음 →</a>{% elif day == total_days %}<button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('resultPreview')?.scrollIntoView({behavior:'smooth'});">결과 보기 ↓</button>{% endif %}
+      </div>
+    </div>
+    <div class="stepper mt-3" aria-label="Trip day stepper">
+      {% for d in day_numbers %}
+        <a class="step {% if d < day %}done{% endif %} {% if d == day %}active{% endif %}" href="{% url 'planner:itinerary' plan.id d %}" title="Day {{ d }}">{{ d }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+    <!-- 일정 목록 -->
+    <div class="col-lg-7 order-1 order-lg-1">
+<!-- 숙소 선택 섹션 -->
+<div class="hotel-section" id="hotelSelectCard">
+  <div class="hotel-section-header">
+    <div class="hotel-section-title">🏨 숙소 선택</div>
+    {% if day_plan.hotel and day_plan.hotel.selected %}
+      <span class="hotel-section-badge">✓ 선택됨</span>
+    {% else %}
+      <span class="hotel-section-badge">미선택</span>
+    {% endif %}
+  </div>
+  <div class="hotel-section-body">
+    {% if day_plan.hotel and day_plan.hotel.selected %}
+    <!-- 선택된 숙소 표시 -->
+    <div class="selected-hotel">
+      <div class="selected-hotel-inner">
+        {% if day_plan.hotel.selected.place_id %}
+          <img src="/api/place_photo/?pid={{ day_plan.hotel.selected.place_id }}&w=900" class="selected-hotel-img" alt="{{ day_plan.hotel.selected.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="selected-hotel-placeholder" style="display:none;">🏨</div>
+        {% elif day_plan.hotel.selected.photo_reference %}
+          <img src="/api/place_photo/?ref={{ day_plan.hotel.selected.photo_reference|urlencode }}&w=900" class="selected-hotel-img" alt="{{ day_plan.hotel.selected.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="selected-hotel-placeholder" style="display:none;">🏨</div>
+        {% else %}
+          <div class="selected-hotel-placeholder">🏨</div>
+        {% endif %}
+        <div class="selected-hotel-info">
+          <div class="selected-hotel-name">{{ day_plan.hotel.selected.name }}</div>
+          {% if day_plan.hotel.selected.google_rating %}
+          <span class="selected-hotel-rating">⭐ {{ day_plan.hotel.selected.google_rating|floatformat:1 }}{% if day_plan.hotel.selected.google_review_count %} ({{ day_plan.hotel.selected.google_review_count }}){% endif %}</span>
+          {% endif %}
+          {% if day_plan.hotel.selected.address %}
+          <div class="selected-hotel-addr">📍 {{ day_plan.hotel.selected.address }}</div>
+          {% endif %}
+          <div class="selected-hotel-badge">🎯 루트 시작점으로 설정됨</div>
+        </div>
+      </div>
+    </div>
+    <div class="small text-muted mb-3">※ 다른 숙소를 선택하거나, 아래에서 더 많은 숙소를 검색할 수 있어요.</div>
+    {% else %}
+    <div class="small text-muted mb-3">※ 숙소를 선택하면 일정의 시작점(0번)으로 들어가요. 루트가 더 자연스럽게 잡힙니다!</div>
+    {% endif %}
+
+    <!-- 숙소 카드 그리드 (3개만) -->
+    {% if day_plan.hotel and day_plan.hotel.candidates %}
+    <div class="hotel-cards-grid">
+      {% for h in day_plan.hotel.candidates|slice:":3" %}
+      <div class="hotel-card {% if day_plan.hotel.selected and day_plan.hotel.selected.place_id and h.place_id and day_plan.hotel.selected.place_id == h.place_id %}selected{% endif %}">
+        {% if h.place_id %}
+          <img src="/api/place_photo/?pid={{ h.place_id }}&w=600" class="hotel-card-img" alt="{{ h.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="hotel-card-placeholder" style="display:none;">🏨</div>
+        {% elif h.photo_reference %}
+          <img src="/api/place_photo/?ref={{ h.photo_reference|urlencode }}&w=600" class="hotel-card-img" alt="{{ h.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="hotel-card-placeholder" style="display:none;">🏨</div>
+        {% else %}
+          <div class="hotel-card-placeholder">🏨</div>
+        {% endif %}
+        <div class="hotel-card-body">
+          <div class="hotel-card-name" title="{{ h.name }}">{{ h.name }}</div>
+          <div class="hotel-card-meta">
+            {% if h.distance_km %}
+            <span class="hotel-dist">📍 {{ h.distance_km|floatformat:1 }}km</span>
+            {% endif %}
+            {% if h.google_rating %}
+            <span class="hotel-card-rating">⭐ {{ h.google_rating|floatformat:1 }}{% if h.google_review_count %} ({{ h.google_review_count }}){% endif %}</span>
+            {% endif %}
+            {% if h.price_level is not None and h.price_level >= 0 %}
+            <span class="hotel-price">{% for i in "x"|rjust:h.price_level|default:1 %}₩{% endfor %} {% if h.price_level == 0 %}저렴{% elif h.price_level == 1 %}보통{% elif h.price_level == 2 %}약간 비쌈{% elif h.price_level == 3 %}비쌈{% else %}매우 비쌈{% endif %}</span>
+            {% endif %}
+          </div>
+          {% if day_plan.hotel.selected and day_plan.hotel.selected.place_id and h.place_id and day_plan.hotel.selected.place_id == h.place_id %}
+            <button class="hotel-card-btn selected">✓ 선택됨</button>
+          {% else %}
+            {% if h.place_id %}
+              <button class="hotel-card-btn select" onclick="selectHotel('{{ h.place_id|escapejs }}')">선택하기</button>
+            {% else %}
+              <button class="hotel-card-btn select" onclick="selectHotelByIndex({{ forloop.counter0 }})">선택하기</button>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 숙소 더보기 버튼 -->
+    <button class="hotel-more-btn" data-bs-toggle="modal" data-bs-target="#hotelModal">
+      🔍 숙소 더보기 (호텔 · 에어비앤비 · 모텔)
+    </button>
+  </div>
+</div>
+      
+      <!-- 🧠 LLM+RAG: Day explanation -->
+      <div id="aiExplainCard" class="ai-explain-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">🧠 Copilot: 오늘 일정 설명</h5>
+          <div class="d-flex gap-2">
+            <button id="btnExplain" class="btn btn-outline-primary btn-sm" onclick="generateExplanation(false)">
+              {% if ai_explain and not ai_explain_stale %}다시 생성{% else %}설명 생성{% endif %}
+            </button>
+          </div>
+        </div>
+        {% if ai_explain and ai_explain_stale %}
+          <div class="ai-explain-stale mt-2">⚠️ 일정이 변경되어 설명이 오래되었어요. “다시 생성”을 눌러 최신화하세요.</div>
+        {% endif %}
+        <div id="explainStatus" class="text-muted small mt-2"></div>
+        <div id="explainBody" class="ai-explain-body mt-2">{% if ai_explain and ai_explain.text %}{{ ai_explain.text }}{% endif %}</div>
+        <div id="explainSources" class="ai-explain-sources">
+          {% if ai_explain and ai_explain.sources %}
+            <div class="mt-2 fw-bold">근거(Top-k)</div>
+            {% for s in ai_explain.sources %}
+              <div class="src">[{{ forloop.counter }}] <b>{{ s.title }}</b> — {{ s.snippet }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+       
+        <div id="tipsSources" class="ai-explain-sources">
+          {% if ai_tips and ai_tips.sources %}
+            <details class="mt-2">
+              <summary class="fw-bold">근거(Top-k)</summary>
+              {% for s in ai_tips.sources %}
+                <div class="src">[{{ forloop.counter }}] <b>{{ s.title }}</b> — {{ s.snippet }}</div>
+              {% endfor %}
+            </details>
+          {% endif %}
+        </div>
+      </div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">📍 오늘의 일정</h5>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPoiModal">+ 장소 추가</button>
+      </div>
+      
+      <div id="poiList">
+        {% if day_plan.hotel and day_plan.hotel.selected %}
+        <div class="poi-item hotel-item" data-hotel="1">
+          <div class="poi-number">0</div>
+          {% if day_plan.hotel.selected.place_id %}
+          <img class="poi-image" src="/api/place_photo/?pid={{ day_plan.hotel.selected.place_id }}&w=700" alt="{{ day_plan.hotel.selected.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="poi-image-placeholder" style="display:none;">🏨</div>
+{% elif day_plan.hotel.selected.photo_reference %}
+          <img class="poi-image" src="/api/place_photo/?ref={{ day_plan.hotel.selected.photo_reference|urlencode }}&w=700" alt="{{ day_plan.hotel.selected.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="poi-image-placeholder" style="display:none;">🏨</div>
+{% else %}
+          <div class="poi-image-placeholder">🏨</div>
+{% endif %}
+          <div class="poi-info">
+            <div class="poi-name">{{ day_plan.hotel.selected.name }}</div>
+            {% if day_plan.hotel.selected.google_rating %}<div class="text-warning" style="font-size:12px;">⭐ {{ day_plan.hotel.selected.google_rating|floatformat:1 }}{% if day_plan.hotel.selected.google_review_count %} ({{ day_plan.hotel.selected.google_review_count }}){% endif %}</div>{% endif %}
+            {% if day_plan.hotel.selected.address %}<div class="poi-feature">{{ day_plan.hotel.selected.address }}</div>{% endif %}
+            <div class="poi-meta">
+              <span class="poi-badge attraction">🏨 숙소</span>
+              <span class="text-muted" style="font-size:11px;">루트 시작점</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% for poi in pois %}
+        <div class="poi-item" draggable="true" data-poi-id="{{ poi.id }}">
+          <div class="poi-number">{{ forloop.counter }}</div>
+          
+          {% if poi.image_url %}
+          <img src="{{ poi.image_url }}" class="poi-image" alt="{{ poi.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="poi-image-placeholder" style="display:none;">
+            {% if poi.poi_type == 'Attraction' %}🏛️{% elif poi.poi_type == 'Restaurant' %}🍴{% else %}☕{% endif %}
+          </div>
+          {% else %}
+          <div class="poi-image-placeholder">
+            {% if poi.poi_type == 'Attraction' %}🏛️{% elif poi.poi_type == 'Restaurant' %}🍴{% else %}☕{% endif %}
+          </div>
+          {% endif %}
+          
+          <div class="poi-info">
+            <div class="poi-name">{{ poi.name }}</div>
+            {% if poi.feature %}<div class="poi-feature">{{ poi.feature }}</div>{% endif %}
+            
+            <div class="poi-meta">
+              <span class="poi-badge {{ poi.poi_type|lower }}">
+                {% if poi.poi_type == 'Attraction' %}🎯 관광지{% elif poi.poi_type == 'Restaurant' %}🍴 맛집{% else %}☕ 카페{% endif %}
+              </span>
+              
+              {% if poi.is_landmark %}<span class="poi-badge landmark">🏛️ 랜드마크</span>{% endif %}
+              
+              {% if poi.rating %}<span class="text-muted" style="font-size:11px;">⭐ {{ poi.rating }}
+                {% if poi.michelin_grade %}
+                  <span class="michelin-inline ms-1" title="미슐랭">
+                    {% if poi.michelin_grade == '3_star' %}미슐랭 ★★★{% elif poi.michelin_grade == '2_star' %}미슐랭 ★★{% elif poi.michelin_grade == '1_star' %}미슐랭 ★{% else %}미슐랭 추천 ★{% endif %}
+                  </span>
+                {% endif %}
+              </span>{% endif %}
+            </div>
+          </div>
+          
+          <div class="poi-actions">
+            <button class="btn-icon remove" onclick="removePoi({{ poi.id }})" title="삭제">🗑️</button>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 text-muted">
+          <p class="mb-3">아직 추가된 장소가 없어요</p>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPoiModal">+ 장소 추가하기</button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <!-- 사이드바 -->
+    <div class="col-lg-5 order-2 order-lg-2">
+      <!-- 지도 -->
+      <div class="sidebar-card">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>🗺️ 루트 지도</div>
+  <button type="button" class="btn btn-outline-primary btn-sm" onclick="optimizePoiOrder()">🚀 이동 최적화</button>
+</div>
+        <div class="card-body p-2">
+          <div id="routeMap"></div>
+        </div>
+      </div>
+
+      <!-- 루트 요약 (지도 아래) -->
+      <div class="sidebar-card" id="routeSummaryCard">
+        <div class="card-header">🧭 루트 요약</div>
+        <div class="card-body">
+          <div id="routeSummary" class="small text-muted">경로 정보를 계산 중…</div>
+        </div>
+      </div>
+      
+      <!-- 팁 -->
+      <!-- 🤖 AI 맞춤 팁 (원본 스타일) -->
+      <div class="sidebar-card">
+        <div class="card-body">
+          <div class="ai-tip-card">
+            <span class="ai-badge">🤖 AI</span>
+            <div id="aiTipContent" class="ai-tip-content">
+              <span class="ai-tip-loading">버튼을 눌러 AI 맞춤 팁을 받아보세요</span>
+            </div>
+            <button class="ai-tip-btn" onclick="loadAiTip(
+              '{{ day_plan.to_city }}',
+              {{ day_plan.day_number }},
+              '{% for poi in pois %}{{ poi.name }}{% if not forloop.last %}, {% endif %}{% endfor %}'
+            )">✨ AI 팁 받기</button>
+          </div>
+        </div>
+      </div>
+
+      
+      <!-- 요약 -->
+      <div class="sidebar-card">
+        <div class="card-header">📊 오늘 요약</div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small">총 장소</span>
+            <span class="fw-bold">{{ pois.count }}개</span>
+          </div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if day == total_days %}
+<section id="resultPreview" class="container pb-5">
+  <div class="sidebar-card">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>✅ 일정 결과 미리보기</div>
+      <div class="d-flex gap-2">
+        <button onclick="downloadPDF()" class="btn btn-primary btn-sm">📄 PDF 다운로드</button>
+        <button onclick="downloadPPT()" class="btn btn-outline-primary btn-sm">📑 PPT 다운로드</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="small text-muted mb-3">
+        마지막 Day까지 선택이 끝났어요. 아래 카드에서 각 Day를 다시 확인하거나, PDF/PPT로 바로 정리할 수 있어요.
+      </div>
+
+      <div class="row g-4 d1-preview-grid">
+        {% for dp in all_day_plans %}
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="d1-preview-card">
+            <a href="{% url 'planner:itinerary' plan.id dp.day_number %}" class="text-decoration-none">
+              <div class="d1-preview-hero">
+                {% if dp.hero_image_url %}
+                  <img src="{{ dp.hero_image_url }}" alt="{{ dp.to_city }}" loading="lazy"
+                       onerror="this.style.display='none'; this.parentElement.classList.add('no-img');" />
+                {% endif %}
+                <div class="d1-preview-hero-fallback">
+                  <div class="d1-preview-hero-fallback-text">{{ dp.to_city }}</div>
+                  <div class="d1-preview-hero-fallback-sub">{{ dp.to_country }}</div>
+                </div>
+
+                <div class="d1-preview-badges">
+                  <span class="badge rounded-pill bg-light text-dark">Day {{ dp.day_number }}</span>
+                  {% if dp.from_city and dp.to_city and dp.from_city != dp.to_city %}
+                    <span class="badge rounded-pill bg-warning text-dark">✈ {{ dp.from_city }} → {{ dp.to_city }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+
+            <div class="p-3">
+              <div class="fw-bold mb-1">{{ dp.to_city }} <span class="text-muted small">{{ dp.to_country }}</span></div>
+              <div class="text-muted small mb-2">📅 {{ dp.date|date:"n월 j일 (D)" }}</div>
+
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for poi in dp.pois.all|slice:":4" %}
+                  <span class="d1-chip">
+                    {% if poi.is_landmark %}🏛{% elif poi.michelin_grade %}🏆{% elif poi.type == 'Restaurant' %}🍽{% elif poi.type == 'Cafe' %}☕{% else %}📍{% endif %}
+                    {{ poi.name|truncatechars:12 }}
+                  </span>
+                {% endfor %}
+              </div>
+
+              <a href="{% url 'planner:itinerary' plan.id dp.day_number %}" class="btn btn-outline-primary w-100">상세 일정 보기 →</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-3 text-end">
+        <a href="{% url 'planner:results' plan.id %}" class="btn btn-outline-secondary btn-sm">결과 페이지 전체 보기</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- 장소 추가 모달 -->
+<div class="modal fade" id="addPoiModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">📍 장소 추가</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <style>
+          /* add-poi modal: ensure candidate grid is scrollable on smaller screens */
+          #addPoiModal .modal-body{max-height:70vh; overflow-y:auto;}
+        </style>
+        <ul class="nav nav-tabs mb-4" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-attraction">🎯 관광지</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-restaurant">🍴 맛집</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cafe">☕ 카페</button></li>
+        </ul>
+        
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="tab-attraction">
+            <div class="row g-3">
+              {% for c in poi_candidates %}{% if c.type == 'Attraction' %}
+              <div class="col-6 col-md-4 col-lg-3">
+                <div class="poi-card">
+                  <div class="img-placeholder" style="{% if c.image %}background-image:url('{{ c.image }}'); background-size:cover; background-position:center;{% else %}background:#dbeafe;{% endif %}">{% if not c.image %}🏛️{% endif %}</div>
+                  <div class="card-body">
+                    <h6 title="{{ c.name }}">{{ c.name }}</h6>
+                    <div class="d-flex gap-1 mb-2 flex-wrap">
+                      {% if c.is_landmark %}<span class="poi-badge landmark" style="font-size:10px;">🏛️ 랜드마크</span>{% endif %}
+                      {% if c.rating %}<span class="text-muted" style="font-size:10px;">⭐ {{ c.rating }}</span>{% endif %}
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="addPoi('{{ c.id|escapejs }}')">+ 추가</button>
+                  </div>
+                </div>
+              </div>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="tab-restaurant">
+            <div class="row g-3">
+              {% for c in poi_candidates %}{% if c.type == 'Restaurant' %}
+              <div class="col-6 col-md-4 col-lg-3">
+                <div class="poi-card">
+                  <div class="img-placeholder" style="{% if c.image %}background-image:url('{{ c.image }}'); background-size:cover; background-position:center;{% else %}background:#fef3c7;{% endif %}">{% if not c.image %}🍴{% endif %}</div>
+                  <div class="card-body">
+                    <h6 title="{{ c.name }}">{{ c.name }}</h6>
+                    <div class="d-flex gap-1 mb-2 flex-wrap">
+                      {% if c.rating %}<span class="text-muted" style="font-size:10px;">⭐ {{ c.rating }}
+                        {% if c.michelin_grade %}<span class="michelin-inline ms-1" title="미슐랭">{% if c.michelin_grade == '3_star' %}미슐랭 ★★★{% elif c.michelin_grade == '2_star' %}미슐랭 ★★{% elif c.michelin_grade == '1_star' %}미슐랭 ★{% else %}미슐랭 추천 ★{% endif %}</span>{% endif %}
+                      </span>{% endif %}
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="addPoi('{{ c.id|escapejs }}')">+ 추가</button>
+                  </div>
+                </div>
+              </div>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="tab-cafe">
+            <div class="row g-3">
+              {% for c in poi_candidates %}{% if c.type == 'Cafe' %}
+              <div class="col-6 col-md-4 col-lg-3">
+                <div class="poi-card">
+                  <div class="img-placeholder" style="{% if c.image %}background-image:url('{{ c.image }}'); background-size:cover; background-position:center;{% else %}background:#d1fae5;{% endif %}">{% if not c.image %}☕{% endif %}</div>
+                  <div class="card-body">
+                    <h6 title="{{ c.name }}">{{ c.name }}</h6>
+                    <div class="d-flex gap-1 mb-2 flex-wrap">
+                      {% if c.rating %}<span class="text-muted" style="font-size:10px;">⭐ {{ c.rating }}</span>{% endif %}
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="addPoi('{{ c.id|escapejs }}')">+ 추가</button>
+                  </div>
+                </div>
+              </div>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 숙소 더보기 모달 -->
+<div class="modal fade" id="hotelModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🏨 숙소 검색</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 검색 박스 -->
+        <div class="hotel-search-box">
+          <input type="text" id="hotelSearchInput" class="hotel-search-input" placeholder="숙소 이름으로 검색 (예: Hilton, 신라호텔)">
+          <button class="hotel-search-btn" onclick="searchHotels()">🔍 검색</button>
+        </div>
+
+        <!-- 탭 -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-hotel" onclick="loadHotelsByType('hotel')">🏨 호텔</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-apartment" onclick="loadHotelsByType('apartment')">🏠 에어비앤비/아파트</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-motel" onclick="loadHotelsByType('motel')">🏩 모텔/게스트하우스</button>
+          </li>
+        </ul>
+
+        <!-- 탭 컨텐츠 -->
+        <div class="tab-content hotel-tab-content">
+          <div class="tab-pane fade show active" id="tab-hotel">
+            <div id="hotelResults" class="row g-3">
+              <div class="hotel-loading">
+                <div class="hotel-loading-spinner"></div>
+                <div>루트 근처 숙소를 검색 중...</div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="tab-apartment">
+            <div id="apartmentResults" class="row g-3">
+              <div class="hotel-empty">
+                <div class="hotel-empty-icon">🏠</div>
+                <div>탭을 클릭하면 검색됩니다</div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="tab-motel">
+            <div id="motelResults" class="row g-3">
+              <div class="hotel-empty">
+                <div class="hotel-empty-icon">🏩</div>
+                <div>탭을 클릭하면 검색됩니다</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transit Modal (대중교통 상세) -->
+<div class="modal fade" id="transitModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="transitModalTitle">대중교통</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="transitModalBody">
+        <div class="text-muted">불러오는 중…</div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2 align-items-center">
+        <a id="transitGmapsLink" class="btn btn-outline-primary" target="_blank" rel="noopener" style="display:none;">Google 지도에서 보기</a>
+        
+        <button id="transitDetailBtn" type="button" class="btn btn-primary" style="display:none;">상세 단계 보기(유료)</button>
+      </div>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.AI_CHAT_CITY = '{{ day_plan.to_city }}';
+</script>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const PLAN_ID = {{ plan.id }};
+const DAY_NUMBER = {{ day }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+const PLAN_CITY = "{{ day_plan.to_city|default:''|escapejs }}";
+const PLAN_COUNTRY = "{{ day_plan.to_country|default:''|escapejs }}";
+
+// v5.2.2: 숙소 미선택 Day 목록
+const DAYS_WITHOUT_HOTEL = {{ days_without_hotel|safe }};
+const PDF_URL = "{% url 'planner:export_pdf' plan.id %}";
+const PPT_URL = "{% url 'planner:export_ppt' plan.id %}";
+
+function _confirmHotelMissing(forWhat) {
+  if (DAYS_WITHOUT_HOTEL && DAYS_WITHOUT_HOTEL.length > 0) {
+    const dayList = DAYS_WITHOUT_HOTEL.join('일, ') + '일';
+    const msg = `⚠️ 숙소가 선택되지 않은 날이 있습니다.\n\n미선택: ${dayList}\n\n숙소를 선택하지 않으면 ${forWhat}에 숙소 정보가 포함되지 않습니다.\n\n그래도 다운로드하시겠습니까?`;
+    return confirm(msg);
+  }
+  return true;
+}
+
+// PDF 다운로드 (숙소 미선택 확인)
+function downloadPDF() {
+  if (!_confirmHotelMissing('PDF')) return;
+  window.location.href = PDF_URL;
+}
+
+// PPT 다운로드 (숙소 미선택 확인)
+function downloadPPT() {
+  if (!_confirmHotelMissing('PPT')) return;
+  window.location.href = PPT_URL;
+}
+
+let _LAST_POINTS = [];
+let _TRANSIT_CTX = null;
+
+// POI 좌표 데이터
+const POI_COORDS = [
+  {% for poi in pois %}
+  {% if poi.latitude and poi.longitude %}
+  { id: {{ poi.id }}, name: "{{ poi.name|escapejs }}", lat: {{ poi.latitude }}, lon: {{ poi.longitude }}, type: "{{ poi.poi_type }}", place_id: "{{ poi.place_id|default:''|escapejs }}", address: "{{ poi.address|default:''|escapejs }}" },
+  {% endif %}
+  {% endfor %}
+];
+
+// 숙소 좌표(있으면 루트의 시작점으로 포함)
+const HOTEL_COORD = {% if day_plan.hotel and day_plan.hotel.selected and day_plan.hotel.selected.lat and day_plan.hotel.selected.lon %}{
+  name: "{{ day_plan.hotel.selected.name|default:''|escapejs }}",
+  address: "{{ day_plan.hotel.selected.address|default:''|escapejs }}",
+  place_id: "{{ day_plan.hotel.selected.place_id|default:''|escapejs }}",
+  lat: {{ day_plan.hotel.selected.lat }},
+  lon: {{ day_plan.hotel.selected.lon }}
+}{% else %}null{% endif %};
+
+function _numberIcon(label) {
+  const html = `<div style="background:#2563eb;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">${label}</div>`;
+  return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+}
+
+function _haversineKm(lat1, lon1, lat2, lon2) {
+  try {
+    const R = 6371.0;
+    const toRad = (d) => (d * Math.PI) / 180.0;
+    const p1 = toRad(parseFloat(lat1));
+    const p2 = toRad(parseFloat(lat2));
+    const dphi = toRad(parseFloat(lat2) - parseFloat(lat1));
+    const dl = toRad(parseFloat(lon2) - parseFloat(lon1));
+    const a = Math.sin(dphi / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1.0, Math.sqrt(a)));
+  } catch (e) {
+    return 0;
+  }
+}
+
+function _gmapsText(q) {
+  return (q || '').toString().trim();
+}
+function _gmapsLocParam(p) {
+  if (!p) return '';
+  
+  // v5.2.2: 이름+도시+국가를 우선 사용 (사용자 친화적)
+  const name = _gmapsText(p.name);
+  const city = _gmapsText(PLAN_CITY);
+  const country = _gmapsText(PLAN_COUNTRY);
+  
+  // 이름이 있으면 이름+도시+국가로 검색 (가장 사용자 친화적)
+  if (name) {
+    const q = [name, city, country].filter(Boolean).join(', ');
+    return q;
+  }
+  
+  // 이름이 없으면 place_id 사용 (ChIJ로 시작하는 유효한 Google Place ID만)
+  const pid = _gmapsText(p.place_id || p.placeId);
+  if (pid && pid.startsWith('ChIJ')) {
+    return `place_id:${pid}`;
+  }
+  
+  // 마지막으로 좌표 사용
+  if (p.lat != null && p.lon != null) {
+    return `${p.lat},${p.lon}`;
+  }
+  
+  return '';
+}
+function _gmapsDirTransitUrl(a, b) {
+  const o = _gmapsLocParam(a);
+  const d = _gmapsLocParam(b);
+  if (!o || !d) return 'https://www.google.com/maps';
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(d)}&travelmode=transit`;
+}
+
+function _fmtMinutes(mins) {
+  const m = Math.max(0, Math.round(mins || 0));
+  if (m < 60) return `${m}분`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r === 0 ? `${h}시간` : `${h}시간 ${r}분`;
+}
+
+function renderRouteSummaryApprox(points) {
+  const el = document.getElementById('routeSummary');
+  if (!el) return;
+
+  if (!points || points.length < 2) {
+    el.innerHTML = '<div class="tr-empty">장소를 추가하면 루트 요약이 표시됩니다.</div>';
+    return;
+  }
+
+  // ✅ 교통보기(openTransit)에서 사용할 최신 포인트 캐시
+  _LAST_POINTS = points;
+
+  // 속도 가정: 도시 내 이동 평균 18km/h (대중교통/도보 혼합 대략)
+  const SPEED_KMH = 18.0;
+
+  let totalKm = 0;
+  let totalMin = 0;
+
+  let html = `<div class="rs-wrap">`;
+  html += `<div class="rs-provider">※ 대략치(직선거리 기반)</div>`;
+  html += `<div class="rs-list">`;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    const km = _haversineKm(a.lat, a.lon, b.lat, b.lon);
+    const mins = (km / SPEED_KMH) * 60;
+    const walkMins = Math.max(1, Math.round((km / 4.8) * 60));
+    totalKm += km;
+    totalMin += mins;
+
+    const from = `${a.label}. ${a.name}`;
+    const to = `${b.label}. ${b.name}`;
+    html += `
+      <div class="rs-seg">
+        <div class="rs-left">
+          <div class="rs-fromto">${from} → ${to}</div>
+          <div class="rs-meta">
+            <span>🚶 도보 약 ${_fmtMinutes(walkMins)}</span>
+            <span class="rs-muted">·</span>
+            <span>${km.toFixed(1)}km</span>
+          </div>
+        </div>
+        <div class="rs-actions">
+          <button class="rs-transit-btn" onclick="openTransit(${i})">교통보기</button>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  html += `<div class="rs-total">
+            <span class="t-label">총 이동</span>
+            <span class="t-value">${_fmtMinutes(totalMin)} · ${totalKm.toFixed(1)}km</span>
+           </div>`;
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+async function renderRouteSummary(points) {
+  const el = document.getElementById('routeSummary');
+  if (!el) return;
+
+  if (!points || points.length < 2) {
+    el.innerHTML = '<div class="tr-empty">장소를 추가하면 루트 요약이 표시됩니다.</div>';
+    return;
+  }
+
+  // ✅ 교통보기(openTransit)에서 사용할 최신 포인트 캐시
+  _LAST_POINTS = points;
+
+  // Ask backend (OSRM + cache) for segment times
+  try {
+    const res = await fetch('{% url "api:route_summary" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        points: points.map(p => ({lat: p.lat, lon: p.lon})),
+        profile: 'driving'
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data || !data.ok || !data.segments) {
+      renderRouteSummaryApprox(points);
+      return;
+    }
+
+    const segs = data.segments || [];
+    const tot = data.total || {};
+    const provider = data.provider || 'approx';
+
+    let html = `<div class="rs-wrap">`;
+    if (provider === 'osrm') {
+      html += `<div class="rs-provider">※ 실제 경로(차량 기준) + 캐시</div>`;
+    } else {
+      html += `<div class="rs-provider">※ 대략치(직선거리 기반)</div>`;
+    }
+    html += `<div class="rs-list">`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      const s = segs[i] || {};
+      const km = Number(s.distance_km || 0);
+      const driveMins = Number(s.duration_min || 0);
+      const walkMins = Math.max(1, Math.round((km / 4.8) * 60));
+
+      const from = `${a.label}. ${a.name}`;
+      const to = `${b.label}. ${b.name}`;
+
+      html += `
+        <div class="rs-seg">
+          <div class="rs-left">
+            <div class="rs-fromto">${from} → ${to}</div>
+            <div class="rs-meta">
+              <span>🚶 도보 약 ${_fmtMinutes(walkMins)}</span>
+              <span class="rs-muted">·</span>
+              <span>${km.toFixed(1)}km</span>
+              <span class="rs-muted">·</span>
+              <span class="rs-muted">차량 참고 ${_fmtMinutes(driveMins)}</span>
+            </div>
+          </div>
+          <div class="rs-actions">
+            <button class="rs-transit-btn" onclick="openTransit(${i})">교통보기</button>
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    html += `<div class="rs-total">
+              <span class="t-label">총 이동</span>
+              <span class="t-value">${_fmtMinutes(Number(tot.duration_min || 0))} · ${Number(tot.distance_km || 0).toFixed(1)}km</span>
+             </div>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
+  } catch (e) {
+    renderRouteSummaryApprox(points);
+  }
+}
+
+async function openTransit(segIdx) {
+  try {
+    const pts = _LAST_POINTS || [];
+    if (!pts || segIdx == null || segIdx < 0 || segIdx >= pts.length - 1) return;
+    const a = pts[segIdx];
+    const b = pts[segIdx + 1];
+
+    // ✅ 0원 기본값: Google 지도(대중교통) 링크로 바로 보기 (API 호출 없음)
+    const fallbackUrl = _gmapsDirTransitUrl(a, b);
+
+    // (옵션) 상세 단계는 버튼 클릭 시에만 API 요청
+    const cacheKey = `transit:${Number(a.lat).toFixed(5)},${Number(a.lon).toFixed(5)}->${Number(b.lat).toFixed(5)},${Number(b.lon).toFixed(5)}`;
+    _TRANSIT_CTX = { a, b, fallbackUrl, cacheKey };
+
+    const title = document.getElementById('transitModalTitle');
+    const body = document.getElementById('transitModalBody');
+    const gLink = document.getElementById('transitGmapsLink');
+    const detailBtn = document.getElementById('transitDetailBtn');
+
+    if (title) title.textContent = `대중교통 · ${a.label}. ${a.name} → ${b.label}. ${b.name}`;
+    if (gLink) { gLink.href = fallbackUrl; gLink.style.display = 'inline-flex'; }
+
+    if (detailBtn) {
+      detailBtn.style.display = 'inline-flex';
+      detailBtn.onclick = () => loadTransitDetails();
+    }
+
+    if (body) {
+      body.innerHTML = `
+        <div class="tr-empty">
+          아래 <b>Google 지도에서 보기</b> 버튼으로 대중교통 경로를 바로 확인할 수 있어요. <span class="text-muted">(무료)</span>
+          <div class="small text-muted mt-2">
+            ‘상세 단계 보기(유료)’는 서버가 대중교통 단계 정보를 가져오기 위해 Google 경로 API 요청을 보낼 수 있어요.
+          </div>
+        </div>
+      `;
+    }
+
+    const modalEl = document.getElementById('transitModal');
+    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    if (modal) modal.show();
+  } catch (e) {
+    const body = document.getElementById('transitModalBody');
+    if (body) body.innerHTML = '<div class="tr-empty">대중교통 정보를 여는 중 오류가 발생했어요.</div>';
+  }
+}
+
+async function loadTransitDetails() {
+  const ctx = _TRANSIT_CTX;
+  if (!ctx) return;
+
+  const { a, b, fallbackUrl, cacheKey } = ctx;
+
+  const body = document.getElementById('transitModalBody');
+  const gLink = document.getElementById('transitGmapsLink');
+  const detailBtn = document.getElementById('transitDetailBtn');
+
+  if (detailBtn) {
+    detailBtn.disabled = true;
+    detailBtn.textContent = '불러오는 중…';
+  }
+  if (body) body.innerHTML = '<div class="tr-empty">상세 단계를 불러오는 중…</div>';
+  if (gLink) { gLink.href = fallbackUrl; gLink.style.display = 'inline-flex'; }
+
+  // ✅ 세션 캐시(같은 브라우저 세션에서는 재요청 방지)
+  try {
+    const cachedRaw = sessionStorage.getItem(cacheKey);
+    if (cachedRaw) {
+      const cached = JSON.parse(cachedRaw);
+      if (cached && cached.ts && (Date.now() - cached.ts) < (6 * 60 * 60 * 1000) && cached.data) { // 6시간 TTL
+        _renderTransitBody(cached.data, fallbackUrl);
+        if (detailBtn) { detailBtn.disabled = false; detailBtn.textContent = '상세 단계 보기(유료)'; }
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // ✅ 버튼 클릭 시에만 API 호출(비용 발생 가능)
+  let res;
+  try {
+    res = await fetch('{% url "api:transit_route" %}', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin: { lat: a.lat, lon: a.lon },
+        dest: { lat: b.lat, lon: b.lon },
+        language: 'ko'
+      })
+    });
+  } catch (e) {
+    if (body) body.innerHTML = '<div class="tr-empty">네트워크 오류로 상세 단계를 불러오지 못했어요. 아래 Google 지도 버튼으로 확인해 주세요.</div>';
+    if (detailBtn) { detailBtn.disabled = false; detailBtn.textContent = '상세 단계 보기(유료)'; }
+    return;
+  }
+
+  // ✅ JSON이 아닌 응답(리다이렉트/HTML/403 등)에도 안전
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  let data = null;
+  try {
+    if (ct.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const t = await res.text();
+      try { data = JSON.parse(t); } catch (e) { data = { ok: false, error: 'non-json' }; }
+    }
+  } catch (e) {
+    data = { ok: false, error: 'parse-failed' };
+  }
+
+  const url = (data && data.fallback_url) || fallbackUrl;
+  if (gLink) { gLink.href = url; gLink.style.display = 'inline-flex'; }
+
+  if (!res.ok || !data || !data.ok) {
+    const err = (data && data.error) ? String(data.error) : '';
+    const hint = err.includes('missing') ? ' (API 키 설정 필요)' : '';
+    if (body) body.innerHTML = `<div class="tr-empty">상세 단계를 가져오지 못했어요${hint}. 아래 Google 지도 버튼으로 확인해 주세요.</div>`;
+    if (detailBtn) { detailBtn.disabled = false; detailBtn.textContent = '상세 단계 보기(유료)'; }
+    return;
+  }
+
+  // ✅ 캐시 저장(세션)
+  try {
+    sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+  } catch (e) {}
+
+  _renderTransitBody(data, url);
+  if (detailBtn) { detailBtn.disabled = false; detailBtn.textContent = '상세 단계 보기(유료)'; }
+}
+
+function _renderTransitBody(data, fallbackUrl) {
+  const body = document.getElementById('transitModalBody');
+  const steps = (data && data.steps) || [];
+  const dur = Number((data && data.duration_min) || 0);
+
+  const vehicleEmoji = (v) => {
+    const s = String(v || '').toUpperCase();
+    if (s.includes('SUBWAY') || s.includes('METRO')) return '🚇';
+    if (s.includes('TRAIN') || s.includes('RAIL')) return '🚆';
+    if (s.includes('TRAM') || s.includes('LIGHT')) return '🚋';
+    if (s.includes('FERRY') || s.includes('BOAT')) return '⛴️';
+    if (s.includes('BUS')) return '🚌';
+    return '🚌';
+  };
+
+  let html = '';
+  html += `<div><span class="tr-pill">총 ${_fmtMinutes(dur)}</span></div>`;
+  html += `<div class="tr-steps">`;
+
+  if (!steps || steps.length === 0) {
+    html += `<div class="tr-empty">상세 단계가 없어요. 아래 버튼으로 Google 지도에서 확인해 주세요.</div>`;
+  } else {
+    for (const st of steps) {
+      const kind = st.type || '';
+      if (kind === 'walk') {
+        const km = (Number(st.distance_m || 0) / 1000);
+        html += `
+          <div class="tr-step">
+            <div class="tr-ico walk">🚶</div>
+            <div class="tr-content">
+              <div class="tr-title">도보</div>
+              <div class="tr-sub">${_fmtMinutes(Number(st.duration_min || 0))} · ${km.toFixed(1)}km</div>
+            </div>
+          </div>
+        `;
+      } else if (kind === 'transit') {
+        const v = st.vehicle || 'TRANSIT';
+        const em = vehicleEmoji(v);
+        const line = st.line ? ` ${st.line}` : '';
+        const head = st.headsign ? ` → ${st.headsign}` : '';
+        const stops = (st.num_stops != null) ? ` · ${st.num_stops}정거장` : '';
+        const dep = st.departure_stop ? ` (${st.departure_stop} → ${st.arrival_stop || ''})` : '';
+        html += `
+          <div class="tr-step">
+            <div class="tr-ico transit">${em}</div>
+            <div class="tr-content">
+              <div class="tr-title">${em} ${v}${line}${head}</div>
+              <div class="tr-sub">${_fmtMinutes(Number(st.duration_min || 0))}${stops}${dep}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="tr-step">
+            <div class="tr-ico">➡️</div>
+            <div class="tr-content">
+              <div class="tr-title">${st.instruction || '이동'}</div>
+              <div class="tr-sub"></div>
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+
+  html += `</div>`;
+  if (body) body.innerHTML = html;
+}
+
+
+// 지도 초기화
+// 지도 렌더링(재사용 가능)
+let map = null;
+let _routeLayer = null;
+
+function _getPoiCoordById(poiId) {
+  const pid = Number(poiId);
+  return (POI_COORDS || []).find(p => Number(p.id) === pid) || null;
+}
+
+function _getCurrentPoiOrderFromDOM() {
+  const list = document.getElementById('poiList');
+  if (!list) return (POI_COORDS || []).map(p => Number(p.id));
+  const items = [...list.querySelectorAll('.poi-item[data-poi-id]')];
+  const order = items.map(it => parseInt(it.dataset.poiId, 10)).filter(n => Number.isFinite(n));
+  return order.length ? order : (POI_COORDS || []).map(p => Number(p.id));
+}
+
+function _buildPointsFromOrder(order) {
+  const pts = [];
+  if (HOTEL_COORD) pts.push({ ...HOTEL_COORD, label: 0, kind: 'hotel' });
+
+  (order || []).forEach((poiId, idx) => {
+    const p = _getPoiCoordById(poiId);
+    if (!p || p.lat === null || p.lon === null || p.lat === undefined || p.lon === undefined) return;
+    pts.push({ ...p, label: idx + 1, kind: 'poi' });
+  });
+
+  // 마지막: 숙소 복귀 마커
+  if (HOTEL_COORD && pts.length > 1) {
+    pts.push({ ...HOTEL_COORD, label: pts.length, kind: 'hotel_return' });
+  }
+  return pts;
+}
+
+function renderRoute(pts) {
+  const mapEl = document.getElementById('routeMap');
+  if (!mapEl) return;
+
+  if (!pts || pts.length === 0) {
+    // 지도 초기화(있으면 레이어만 제거)
+    try { if (_routeLayer) _routeLayer.clearLayers(); } catch(e) {}
+    mapEl.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 text-muted">장소를 추가하면 지도가 표시됩니다</div>';
+    renderRouteSummary([]);
+    return;
+  }
+
+  // map init once
+  if (!map) {
+    // Leaflet이 map div를 점유하므로, 최초엔 비워둠
+    mapEl.innerHTML = '';
+    const first = pts[0];
+    map = L.map('routeMap').setView([first.lat, first.lon], 13);
+    window.routeMapInstance = map;
+    setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 250);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    _routeLayer = L.layerGroup().addTo(map);
+  }
+
+  if (!_routeLayer) {
+    _routeLayer = L.layerGroup().addTo(map);
+  } else {
+    _routeLayer.clearLayers();
+  }
+
+  const line = [];
+  pts.forEach((p) => {
+    const icon = _numberIcon(p.label);
+    const marker = L.marker([p.lat, p.lon], { icon }).addTo(_routeLayer);
+    if (p.kind === 'hotel') {
+      marker.bindPopup(`<b>0. ${p.name}</b><br/><span style="font-size:12px;">${p.address || ''}</span>`);
+    } else if (p.kind === 'hotel_return') {
+      marker.bindPopup(`<b>${p.label}. ${p.name}</b><br/><span style="font-size:12px;">숙소로 복귀</span>`);
+    } else {
+      marker.bindPopup(`<b>${p.label}. ${p.name}</b>`);
+    }
+    line.push([p.lat, p.lon]);
+  });
+
+  if (line.length > 1) {
+    L.polyline(line, { color: '#4f46e5', weight: 3, opacity: 0.7, dashArray: '10, 10' }).addTo(_routeLayer);
+    try { map.fitBounds(line, { padding: [30, 30] }); } catch(e) {}
+  }
+
+  renderRouteSummary(pts);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const order = _getCurrentPoiOrderFromDOM();
+  const pts = _buildPointsFromOrder(order);
+  renderRoute(pts);
+});
+
+
+// 숙소 검색 (Google Places)
+// 숙소 검색 (Google Places)
+async function hotelSearch() {
+  const q = (document.getElementById('hotelSearchInput')?.value || '').trim();
+  const box = document.getElementById('hotelSearchResults');
+  if (!box) return;
+  if (!q) {
+    box.innerHTML = '<div class="text-muted small">검색어를 입력해 주세요.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="text-muted small">검색 중…</div>';
+
+  // bias location: prefer selected hotel -> first poi
+  let lat = null, lon = null;
+  if (HOTEL_COORD) { lat = HOTEL_COORD.lat; lon = HOTEL_COORD.lon; }
+  else if (POI_COORDS && POI_COORDS.length > 0) { lat = POI_COORDS[0].lat; lon = POI_COORDS[0].lon; }
+
+  const params = new URLSearchParams();
+  params.set('q', q);
+  params.set('city', '{{ day_plan.to_city|escapejs }}');
+  params.set('country', '{{ day_plan.to_country|default:""|escapejs }}');
+  if (lat !== null && lon !== null) { params.set('lat', String(lat)); params.set('lon', String(lon)); }
+
+  try {
+    const res = await fetch('{% url "api:hotel_search" %}?'+params.toString());
+    const data = await res.json();
+    if (!res.ok || !data || !data.ok) {
+      box.innerHTML = `<div class="text-danger small">검색 실패: ${(data && data.error) ? data.error : 'unknown'}</div>`;
+      return;
+    }
+    const results = data.results || [];
+    if (results.length === 0) {
+      box.innerHTML = '<div class="text-muted small">검색 결과가 없어요.</div>';
+      return;
+    }
+
+    let html = '<div class="d-flex flex-column gap-2">';
+    results.forEach(r => {
+      const pid = (r.place_id || '').trim();
+      const nm = r.name || '';
+      const addr = r.address || '';
+      const img = r.image_url || '';
+      html += `
+        <div class="d-flex gap-2 align-items-start p-2 border rounded-3" style="background:#fff;">
+          ${img ? `<img src="${img}" style="width:74px;height:56px;object-fit:cover;border-radius:10px;background:#f1f5f9;" onerror="this.style.display='none';">` : `<div class="poi-image-placeholder" style="width:74px;height:56px;border-radius:10px;background:#f1f5f9;">🏨</div>`}
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="fw-semibold text-truncate" title="${nm}">${nm}</div>
+            <div class="text-muted small text-truncate" title="${addr}">${addr}</div>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-primary" onclick="selectHotelCustom('${pid.replace(/'/g, "\\'")}')">이 숙소로 선택</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<div class="text-danger small">검색 중 오류가 발생했습니다.</div>';
+  }
+}
+
+// 검색으로 찾은 숙소를 place_id로 바로 선택
+// ============================================================
+// 숙소 검색 기능
+// ============================================================
+let hotelModalInstance = null;
+let loadedHotelTypes = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const hotelModalEl = document.getElementById('hotelModal');
+  if (hotelModalEl) {
+    hotelModalEl.addEventListener('shown.bs.modal', function() {
+      // 모달이 열리면 호텔 탭 자동 로드
+      if (!loadedHotelTypes['hotel']) {
+        loadHotelsByType('hotel');
+      }
+    });
+  }
+});
+
+function getRouteCenterCoords() {
+  // POI 좌표들의 중심점 계산
+  if (POI_COORDS && POI_COORDS.length > 0) {
+    const sumLat = POI_COORDS.reduce((a, p) => a + (p.lat || 0), 0);
+    const sumLon = POI_COORDS.reduce((a, p) => a + (p.lon || 0), 0);
+    return {
+      lat: sumLat / POI_COORDS.length,
+      lon: sumLon / POI_COORDS.length
+    };
+  }
+  // 숙소 좌표 fallback
+  if (HOTEL_COORD && HOTEL_COORD.lat && HOTEL_COORD.lon) {
+    return { lat: HOTEL_COORD.lat, lon: HOTEL_COORD.lon };
+  }
+  return null;
+}
+
+async function loadHotelsByType(type) {
+  const resultsId = type === 'hotel' ? 'hotelResults' : (type === 'apartment' ? 'apartmentResults' : 'motelResults');
+  const container = document.getElementById(resultsId);
+  if (!container) return;
+
+  // 이미 로드했으면 스킵
+  if (loadedHotelTypes[type]) return;
+
+  container.innerHTML = `
+    <div class="col-12">
+      <div class="hotel-loading">
+        <div class="hotel-loading-spinner"></div>
+        <div>숙소를 검색 중...</div>
+      </div>
+    </div>
+  `;
+
+  const center = getRouteCenterCoords();
+  const typeKeyword = type === 'hotel' ? 'hotel' : (type === 'apartment' ? 'airbnb apartment' : 'motel guesthouse hostel');
+  
+  try {
+    const params = new URLSearchParams({
+      q: typeKeyword,
+      city: PLAN_CITY,
+      country: PLAN_COUNTRY
+    });
+    if (center) {
+      params.set('lat', center.lat);
+      params.set('lon', center.lon);
+    }
+
+    const res = await fetch(`/api/hotel_search/?${params.toString()}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.ok || !data.results || data.results.length === 0) {
+      container.innerHTML = `
+        <div class="col-12">
+          <div class="hotel-empty">
+            <div class="hotel-empty-icon">😢</div>
+            <div>검색 결과가 없어요</div>
+            <div class="small text-muted mt-2">다른 키워드로 검색해보세요</div>
+          </div>
+        </div>
+      `;
+      loadedHotelTypes[type] = true;
+      return;
+    }
+
+    renderHotelResults(container, data.results);
+    loadedHotelTypes[type] = true;
+  } catch (e) {
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="hotel-empty">
+          <div class="hotel-empty-icon">⚠️</div>
+          <div>검색 중 오류가 발생했어요</div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+async function searchHotels() {
+  const input = document.getElementById('hotelSearchInput');
+  const query = (input?.value || '').trim();
+  if (!query) {
+    alert('검색어를 입력해주세요');
+    return;
+  }
+
+  const container = document.getElementById('hotelResults');
+  if (!container) return;
+
+  // 호텔 탭으로 이동
+  const hotelTab = document.querySelector('[data-bs-target="#tab-hotel"]');
+  if (hotelTab) {
+    const tab = new bootstrap.Tab(hotelTab);
+    tab.show();
+  }
+
+  container.innerHTML = `
+    <div class="col-12">
+      <div class="hotel-loading">
+        <div class="hotel-loading-spinner"></div>
+        <div>"${query}" 검색 중...</div>
+      </div>
+    </div>
+  `;
+
+  const center = getRouteCenterCoords();
+
+  try {
+    const params = new URLSearchParams({
+      q: query,
+      city: PLAN_CITY,
+      country: PLAN_COUNTRY
+    });
+    if (center) {
+      params.set('lat', center.lat);
+      params.set('lon', center.lon);
+    }
+
+    const res = await fetch(`/api/hotel_search/?${params.toString()}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.ok || !data.results || data.results.length === 0) {
+      container.innerHTML = `
+        <div class="col-12">
+          <div class="hotel-empty">
+            <div class="hotel-empty-icon">🔍</div>
+            <div>"${query}" 검색 결과가 없어요</div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    renderHotelResults(container, data.results);
+  } catch (e) {
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="hotel-empty">
+          <div class="hotel-empty-icon">⚠️</div>
+          <div>검색 중 오류가 발생했어요</div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function renderHotelResults(container, results) {
+  container.innerHTML = '';
+  
+  // v5.2: 루트 중심에서 가까운 거리 + 평점 순 정렬
+  const center = getRouteCenterCoords();
+  
+  results.sort((a, b) => {
+    let distA = 9999, distB = 9999;
+    if (center) {
+      if (a.lat && a.lon) distA = _haversineKm(center.lat, center.lon, a.lat, a.lon);
+      if (b.lat && b.lon) distB = _haversineKm(center.lat, center.lon, b.lat, b.lon);
+    }
+    // 1순위: 거리, 2순위: 평점
+    if (Math.abs(distA - distB) > 0.5) return distA - distB; // 0.5km 이상 차이나면 거리 우선
+    return (b.rating || 0) - (a.rating || 0);
+  });
+  
+  results.forEach(h => {
+    const pid = h.place_id || '';
+    const name = h.name || '숙소';
+    const addr = h.address || '';
+    const imgUrl = h.image_url || (pid ? `/api/place_photo/?pid=${pid}&w=600` : '');
+    const rating = h.rating;
+    const reviewCount = h.review_count;
+    const priceLevel = h.price_level;
+    
+    // 거리 계산
+    let distText = '';
+    if (center && h.lat && h.lon) {
+      const distKm = _haversineKm(center.lat, center.lon, h.lat, h.lon);
+      if (distKm < 1) {
+        distText = `<span class="hotel-dist">📍 ${Math.round(distKm * 1000)}m</span>`;
+      } else {
+        distText = `<span class="hotel-dist">📍 ${distKm.toFixed(1)}km</span>`;
+      }
+    }
+    
+    // 가격 레벨 표시 (0-4)
+    let priceText = '';
+    if (priceLevel !== null && priceLevel !== undefined && priceLevel >= 0) {
+      const won = '₩'.repeat(Math.max(1, priceLevel + 1));
+      const priceLabels = ['저렴', '보통', '약간 비쌈', '비쌈', '매우 비쌈'];
+      priceText = `<span class="hotel-price">${won} ${priceLabels[priceLevel] || ''}</span>`;
+    }
+    
+    // 평점 & 리뷰수 표시
+    let ratingText = '';
+    if (rating) {
+      ratingText = `<span class="hotel-card-rating">⭐ ${rating.toFixed(1)}${reviewCount ? ` (${reviewCount.toLocaleString()})` : ''}</span>`;
+    }
+    
+    const card = document.createElement('div');
+    card.className = 'col-6 col-md-4 col-lg-3';
+    card.innerHTML = `
+      <div class="hotel-card">
+        ${imgUrl ? `
+          <img src="${imgUrl}" class="hotel-card-img" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="hotel-card-placeholder" style="display:none;">🏨</div>
+        ` : `
+          <div class="hotel-card-placeholder">🏨</div>
+        `}
+        <div class="hotel-card-body">
+          <div class="hotel-card-name" title="${name}">${name}</div>
+          <div class="hotel-card-meta">
+            ${distText}
+            ${ratingText}
+            ${priceText}
+          </div>
+          <button class="hotel-card-btn select" onclick="selectHotelFromModal('${pid.replace(/'/g, "\\'")}')">선택하기</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function selectHotelFromModal(placeId) {
+  if (!placeId) {
+    alert('숙소 정보가 올바르지 않습니다.');
+    return;
+  }
+  
+  // 모달 닫기
+  const modal = bootstrap.Modal.getInstance(document.getElementById('hotelModal'));
+  if (modal) modal.hide();
+
+  // selectHotelCustom API 호출
+  const payload = { plan_id: PLAN_ID, day_number: DAY_NUMBER, place_id: placeId };
+  try {
+    const res = await fetch('{% url "api:select_hotel_custom" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      location.reload();
+    } else {
+      alert((data && data.error) || '숙소 선택 실패');
+    }
+  } catch (e) {
+    alert('숙소 선택 중 오류가 발생했습니다.');
+  }
+}
+
+async function selectHotelCustom(placeId) {
+  if (!placeId) return;
+  const payload = { plan_id: PLAN_ID, day_number: DAY_NUMBER, place_id: placeId };
+  try {
+    const res = await fetch('{% url "api:select_hotel_custom" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      location.reload();
+    } else {
+      alert((data && data.error) || '숙소 선택 실패');
+    }
+  } catch (e) {
+    alert('숙소 선택 중 오류가 발생했습니다.');
+  }
+}
+
+// 숙소 선택
+async function selectHotel(placeId) {
+  if (!placeId) return;
+  const formData = new FormData();
+  formData.append('plan_id', PLAN_ID);
+  formData.append('day_number', DAY_NUMBER);
+  formData.append('place_id', placeId);
+
+  try {
+    const res = await fetch('{% url "api:select_hotel" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF_TOKEN},
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      location.reload();
+    } else {
+      alert((data && data.error) || '숙소 선택 실패');
+    }
+  } catch (e) {
+    alert('숙소 선택 중 오류가 발생했습니다.');
+  }
+}
+
+// place_id가 없는 후보를 위한 fallback(인덱스 기준)
+async function selectHotelByIndex(idx) {
+  const formData = new FormData();
+  formData.append('plan_id', PLAN_ID);
+  formData.append('day_number', DAY_NUMBER);
+  formData.append('index', idx);
+
+  try {
+    const res = await fetch('{% url "api:select_hotel" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF_TOKEN},
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      location.reload();
+    } else {
+      alert((data && data.error) || '숙소 선택 실패');
+    }
+  } catch (e) {
+    alert('숙소 선택 중 오류가 발생했습니다.');
+  }
+}
+
+// POI 추가
+async function addPoi(poiId) {
+  const formData = new FormData();
+  formData.append('plan_id', PLAN_ID);
+  formData.append('day_number', DAY_NUMBER);
+  formData.append('poi_id', poiId);
+  
+  try {
+    const res = await fetch('{% url "api:add_poi" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF_TOKEN},
+      body: formData
+    });
+    if (res.ok) { location.reload(); }
+    else { const data = await res.json(); alert(data.error || '추가 실패'); }
+  } catch(e) { alert('오류가 발생했습니다.'); }
+}
+
+// POI 삭제
+async function removePoi(poiId) {
+  if (!confirm('이 장소를 삭제하시겠습니까?')) return;
+  const formData = new FormData();
+  formData.append('poi_id', poiId);
+  
+  try {
+    const res = await fetch('{% url "api:remove_poi" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF_TOKEN},
+      body: formData
+    });
+    if (res.ok) { location.reload(); }
+  } catch(e) { alert('오류가 발생했습니다.'); }
+}
+
+
+// ✅ 이동 최적화: 숙소(시작/끝) 기준으로 POI 순서를 거리 최적화
+function _haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371.0;
+  const toRad = (x) => (Number(x) * Math.PI) / 180.0;
+  const p1 = toRad(lat1), p2 = toRad(lat2);
+  const dp = toRad(lat2 - lat1);
+  const dl = toRad(lon2 - lon1);
+  const a = Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+function _patternOk(seq) {
+  // 관광지가 2개 이상이고(=Attraction), 음식/카페가 있으면
+  // "관광지 ... 관광지" 형태(양끝 관광지)를 선호
+  const atts = seq.filter(x => x.type === 'Attraction').length;
+  const hasFood = seq.some(x => x.type === 'Restaurant') || seq.some(x => x.type === 'Cafe');
+  if (atts >= 2 && hasFood && seq.length >= 4) {
+    if (seq[0].type !== 'Attraction') return false;
+    if (seq[seq.length - 1].type !== 'Attraction') return false;
+    const preLast = seq[seq.length - 2];
+    if (preLast && (preLast.type === 'Restaurant' || preLast.type === 'Cafe')) return false;
+  }
+  return true;
+}
+
+function _applyPoiOrderToDOM(orderIds) {
+  const list = document.getElementById('poiList');
+  if (!list) return;
+  const byId = {};
+  [...list.querySelectorAll('.poi-item[data-poi-id]')].forEach(it => {
+    const id = parseInt(it.dataset.poiId, 10);
+    if (Number.isFinite(id)) byId[id] = it;
+  });
+  orderIds.forEach(id => {
+    const el = byId[Number(id)];
+    if (el) list.appendChild(el);
+  });
+}
+
+function optimizePoiOrder() {
+  const order = _getCurrentPoiOrderFromDOM();
+  const nodes = (order || []).map(id => _getPoiCoordById(id)).filter(p => p && p.lat != null && p.lon != null);
+  if (nodes.length <= 2) return;
+
+  const start = (HOTEL_COORD && HOTEL_COORD.lat != null && HOTEL_COORD.lon != null)
+    ? { lat: Number(HOTEL_COORD.lat), lon: Number(HOTEL_COORD.lon) }
+    : { lat: Number(nodes[0].lat), lon: Number(nodes[0].lon) };
+
+  const n = nodes.length;
+  const used = new Array(n).fill(false);
+  const path = new Array(n);
+
+  let best = null;
+  let bestCost = Infinity;
+
+  // small-N exact search (<=8), else greedy
+  if (n <= 8) {
+    function dfs(depth, prevLat, prevLon, costSoFar) {
+      if (costSoFar >= bestCost) return;
+      if (depth === n) {
+        // close the loop back to start
+        const total = costSoFar + _haversineKm(prevLat, prevLon, start.lat, start.lon);
+        const seq = path.slice();
+        // try constrained first
+        if (_patternOk(seq) && total < bestCost) {
+          bestCost = total;
+          best = seq.slice();
+        }
+        return;
+      }
+      for (let i = 0; i < n; i++) {
+        if (used[i]) continue;
+        used[i] = true;
+        path[depth] = nodes[i];
+        const d = _haversineKm(prevLat, prevLon, nodes[i].lat, nodes[i].lon);
+        dfs(depth + 1, Number(nodes[i].lat), Number(nodes[i].lon), costSoFar + d);
+        used[i] = false;
+      }
+    }
+
+    // pass 1: constrained
+    dfs(0, start.lat, start.lon, 0);
+
+    // pass 2: unconstrained fallback
+    if (!best) {
+      function dfs2(depth, prevLat, prevLon, costSoFar) {
+        if (costSoFar >= bestCost) return;
+        if (depth === n) {
+          const total = costSoFar + _haversineKm(prevLat, prevLon, start.lat, start.lon);
+          if (total < bestCost) {
+            bestCost = total;
+            best = path.slice();
+          }
+          return;
+        }
+        for (let i = 0; i < n; i++) {
+          if (used[i]) continue;
+          used[i] = true;
+          path[depth] = nodes[i];
+          const d = _haversineKm(prevLat, prevLon, nodes[i].lat, nodes[i].lon);
+          dfs2(depth + 1, Number(nodes[i].lat), Number(nodes[i].lon), costSoFar + d);
+          used[i] = false;
+        }
+      }
+      bestCost = Infinity;
+      dfs2(0, start.lat, start.lon, 0);
+    }
+  } else {
+    // greedy nearest neighbor + light variety
+    const remain = nodes.slice();
+    const seq = [];
+    let curLat = start.lat, curLon = start.lon;
+    let prevType = null;
+    while (remain.length) {
+      let bestIdx = 0;
+      let bestScore = Infinity;
+      for (let i = 0; i < remain.length; i++) {
+        const p = remain[i];
+        const d = _haversineKm(curLat, curLon, p.lat, p.lon);
+        let penalty = 0;
+        if (prevType && prevType === p.type && (p.type === 'Restaurant' || p.type === 'Cafe')) penalty = 0.25;
+        const score = d + penalty;
+        if (score < bestScore) { bestScore = score; bestIdx = i; }
+      }
+      const picked = remain.splice(bestIdx, 1)[0];
+      seq.push(picked);
+      curLat = Number(picked.lat); curLon = Number(picked.lon);
+      prevType = picked.type;
+    }
+    best = seq;
+  }
+
+  if (!best) return;
+
+  const bestIds = best.map(p => Number(p.id));
+  _applyPoiOrderToDOM(bestIds);
+  // 저장 + 지도/요약 즉시 갱신
+  saveOrder();
+}
+
+// 드래그앤드롭
+const poiList = document.getElementById('poiList');
+let draggedItem = null;
+
+if(poiList) {
+  poiList.addEventListener('dragstart', (e) => {
+    const item = e.target.closest('.poi-item');
+    if (item && item.dataset && item.dataset.poiId) {
+      draggedItem = item;
+      item.classList.add('dragging');
+    }
+  });
+  poiList.addEventListener('dragend', (e) => {
+    const item = e.target.closest('.poi-item');
+    if (item && item.dataset && item.dataset.poiId) {
+      item.classList.remove('dragging');
+      saveOrder();
+    }
+  });
+  poiList.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(poiList, e.clientY);
+    if (draggedItem) {
+      if (!afterElement) poiList.appendChild(draggedItem);
+      else poiList.insertBefore(draggedItem, afterElement);
+    }
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const elements = [...container.querySelectorAll('.poi-item[data-poi-id]:not(.dragging)')];
+  return elements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) return { offset, element: child };
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+async function saveOrder() {
+  // hotel(0)은 고정, 실제 저장/번호는 POI만
+  const items = [...poiList.querySelectorAll('.poi-item[data-poi-id]')];
+  const order = items
+    .map(item => parseInt(item.dataset.poiId, 10))
+    .filter(n => Number.isFinite(n));
+
+  // renumber: hotel stays 0, POIs start at 1
+  const hotelNum = poiList.querySelector('.poi-item.hotel-item .poi-number');
+  if (hotelNum) hotelNum.textContent = '0';
+  items.forEach((item, idx) => {
+    const numEl = item.querySelector('.poi-number');
+    if (numEl) numEl.textContent = idx + 1;
+  });
+
+  // ✅ 지도/요약 즉시 갱신 (새로고침 없이)
+  try {
+    const pts = _buildPointsFromOrder(order);
+    renderRoute(pts);
+  } catch(e) { console.error('지도 갱신 실패:', e); }
+
+  try {
+    await fetch(`/plan/${PLAN_ID}/day/${DAY_NUMBER}/reorder/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify({ order })
+    });
+  } catch(e) { console.error('순서 저장 실패:', e); }
+}
+
+// ---------------------------
+// 🧠 LLM+RAG Explanation
+// ---------------------------
+async function generateExplanation(force){
+  const btn = document.getElementById('btnExplain');
+  const status = document.getElementById('explainStatus');
+  const body = document.getElementById('explainBody');
+  const sources = document.getElementById('explainSources');
+
+  if(btn){ btn.disabled = true; btn.innerText = '생성중…'; }
+  if(status) status.textContent = '설명을 생성하고 있어요… (처음 1회는 약간 걸릴 수 있어요)';
+  try{
+    const url = "{% url 'planner:day_explain' plan.id day %}";
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      credentials: 'same-origin',
+      body: JSON.stringify({ force: !!force })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || '설명 생성 실패');
+    }
+    const payload = data.payload || {};
+    if(body) body.textContent = payload.text || '';
+    // sources
+    if(sources){
+      const hs = payload.sources || [];
+      if(hs.length){
+        let html = '<div class="mt-2 fw-bold">근거(Top-k)</div>';
+        hs.forEach((h, i) => {
+          html += `<div class="src">[${i+1}] <b>${(h.title||'')}</b> — ${(h.snippet||'')}</div>`;
+        });
+        sources.innerHTML = html;
+      } else {
+        sources.innerHTML = '';
+      }
+    }
+    if(status){
+      if(payload.used_llm){
+        status.textContent = '✅ LLM+RAG로 설명을 생성했어요. (일정이 바뀌면 다시 생성하세요)';
+      } else {
+        status.textContent = 'ℹ️ LLM 키가 없어서 기본 로직으로 설명했어요. (.env에 OPENAI_API_KEY를 넣으면 더 좋아져요)';
+      }
+    }
+  }catch(e){
+    console.error(e);
+    if(status) status.textContent = '❌ 설명 생성 중 오류가 발생했어요: ' + (e.message || e);
+    alert('설명 생성 중 오류가 발생했어요. 콘솔/로그를 확인해주세요.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerText = '다시 생성'; }
+  }
+}
+
+
+async function generateTips(force){
+  const btn = document.getElementById('btnTips');
+  const status = document.getElementById('tipsStatus');
+  const body = document.getElementById('tipsBody');
+  const sources = document.getElementById('tipsSources');
+
+  if(btn){ btn.disabled = true; btn.innerText = '생성중…'; }
+  if(status) status.textContent = '팁을 생성하고 있어요…';
+  try{
+    const url = "{% url 'planner:day_tips' plan.id day %}";
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      credentials: 'same-origin',
+      body: JSON.stringify({ force: !!force })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || '팁 생성 실패');
+    }
+    const payload = data.payload || {};
+
+    // body bullets
+    if(body){
+      const bullets = payload.bullets || [];
+      if(bullets.length){
+        let html = '<ul style="margin:0; padding-left:18px;">';
+        bullets.forEach((b) => {
+          html += `<li style="margin:4px 0;">${(b||'')}</li>`;
+        });
+        html += '</ul>';
+        body.innerHTML = html;
+      } else {
+        body.innerHTML = '<div class="text-muted">생성된 팁이 없어요. 다시 시도해보세요.</div>';
+      }
+    }
+
+    // sources
+    if(sources){
+      const hs = payload.sources || [];
+      if(hs.length){
+        let html = '<details class="mt-2"><summary class="fw-bold">근거(Top-k)</summary>';
+        hs.forEach((h, i) => {
+          html += `<div class="src">[${i+1}] <b>${(h.title||'')}</b> — ${(h.snippet||'')}</div>`;
+        });
+        html += '</details>';
+        sources.innerHTML = html;
+      } else {
+        sources.innerHTML = '';
+      }
+    }
+
+    if(status){
+      if(payload.used_llm){
+        status.textContent = '✅ LLM+RAG로 팁을 생성했어요. (일정이 바뀌면 다시 생성하세요)';
+      } else {
+        status.textContent = 'ℹ️ RAG 근거로 팁을 구성했어요. (.env에 OPENAI_API_KEY를 넣으면 더 자연스러워져요)';
+      }
+    }
+  }catch(e){
+    console.error(e);
+    if(status) status.textContent = '❌ 팁 생성 중 오류가 발생했어요: ' + (e.message || e);
+    alert('팁 생성 중 오류가 발생했어요. 콘솔/로그를 확인해주세요.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerText = '다시 생성'; }
+  }
+}
+
+
+</script>
+{% endblock %}
+

@@ -1,0 +1,146 @@
+{
+  "kr_seoul.jpg": {
+    "query": "Gyeongbokgung Palace",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/%EA%B4%91%ED%99%94%EB%AC%B8_%EC%9B%94%EB%8C%80.jpg/1920px-%EA%B4%91%ED%99%94%EB%AC%B8_%EC%9B%94%EB%8C%80.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=599683",
+    "fetched_at": "2026-02-09T00:55:19.122707Z"
+  },
+  "jp_tokyo.jpg": {
+    "query": "Tokyo Tower",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Tokyo_Tower_2023.jpg/1920px-Tokyo_Tower_2023.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=148869",
+    "fetched_at": "2026-02-09T01:05:49.414501Z"
+  },
+  "kr_busan.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Gwangan Bridge at Night, Busan.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Gwangan_Bridge_at_Night,_Busan.jpg",
+    "fetched_at": "2026-02-09T01:01:51.125231Z"
+  },
+  "kr_jeju.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Seongsan Ilchulbong cliff facing the sea.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Seongsan_Ilchulbong_cliff_facing_the_sea.jpg",
+    "fetched_at": "2026-02-09T01:01:53.626258Z"
+  },
+  "jp_osaka.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Dotonbori, Osaka, at night, November 2016.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Dotonbori,_Osaka,_at_night,_November_2016.jpg",
+    "fetched_at": "2026-02-09T01:01:55.890901Z"
+  },
+  "th_bangkok.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Templo Wat Arun, Bangkok, Tailandia, 2013-08-22, DD 37.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Templo_Wat_Arun,_Bangkok,_Tailandia,_2013-08-22,_DD_37.jpg",
+    "fetched_at": "2026-02-09T01:01:57.547784Z"
+  },
+  "vn_hcmc.jpg": {
+    "query": "Notre-Dame Cathedral Basilica of Saigon",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Bas%C3%ADlica_de_Nuestra_Se%C3%B1ora%2C_Ciudad_Ho_Chi_Minh%2C_Vietnam%2C_2013-08-14%2C_DD_03.JPG/1920px-Bas%C3%ADlica_de_Nuestra_Se%C3%B1ora%2C_Ciudad_Ho_Chi_Minh%2C_Vietnam%2C_2013-08-14%2C_DD_03.JPG",
+    "page_url": "https://en.wikipedia.org/?curid=8613984",
+    "fetched_at": "2026-02-09T01:02:00.075942Z"
+  },
+  "vn_danang.jpg": {
+    "source": "wikimedia_commons",
+    "file": "My Khe Beach Danang Coastline.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:My_Khe_Beach_Danang_Coastline.jpg",
+    "fetched_at": "2026-02-09T01:05:54.391712Z"
+  },
+  "uk_london.jpg": {
+    "source": "wikimedia_commons",
+    "file": "London, Tower Bridge -- 2016 -- 4772.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:London,_Tower_Bridge_--_2016_--_4772.jpg",
+    "fetched_at": "2026-02-09T01:02:03.955448Z"
+  },
+  "fr_paris.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Eiffel Tower at night.JPG",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Eiffel_Tower_at_night.JPG",
+    "fetched_at": "2026-02-09T01:02:05.992998Z"
+  },
+  "nl_amsterdam.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Amsterdam Canal at Night.JPG",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Amsterdam_Canal_at_Night.JPG",
+    "fetched_at": "2026-02-09T01:05:57.579358Z"
+  },
+  "de_berlin.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Brandenburg Gate at night.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Brandenburg_Gate_at_night.jpg",
+    "fetched_at": "2026-02-09T01:05:58.860025Z"
+  },
+  "at_vienna.jpg": {
+    "query": "Schonbrunn Palace",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Wien_-_Schloss_Sch%C3%B6nbrunn.JPG/1920px-Wien_-_Schloss_Sch%C3%B6nbrunn.JPG",
+    "page_url": "https://en.wikipedia.org/?curid=165202",
+    "fetched_at": "2026-02-09T01:06:01.693367Z"
+  },
+  "it_rome.jpg": {
+    "query": "Colosseum",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/1920px-Colosseo_2020.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=49603",
+    "fetched_at": "2026-02-09T01:06:08.095202Z"
+  },
+  "au_sydney.jpg": {
+    "query": "Sydney Opera House",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Sydney_Australia._%2821339175489%29.jpg/1920px-Sydney_Australia._%2821339175489%29.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=28222",
+    "fetched_at": "2026-02-09T01:06:14.986235Z"
+  },
+  "de_munich.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Marienplatz, Munich, Germany.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Marienplatz,_Munich,_Germany.jpg",
+    "fetched_at": "2026-02-09T01:03:07.111214Z"
+  },
+  "ch_interlaken.jpg": {
+    "query": "Interlaken Switzerland Alps",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Goldswil-Viadukt_Panorama_mit_Interlaken_im_Hintergrund_2.jpg/1920px-Goldswil-Viadukt_Panorama_mit_Interlaken_im_Hintergrund_2.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=502134",
+    "fetched_at": "2026-02-09T01:04:39.852682Z"
+  },
+  "it_venice.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Venice view, Grand Canal, Venice, Italy.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Venice_view,_Grand_Canal,_Venice,_Italy.jpg",
+    "fetched_at": "2026-02-09T01:06:04.876643Z"
+  },
+  "it_florence.jpg": {
+    "query": "Florence Cathedral",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg/1920px-Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=220884",
+    "fetched_at": "2026-02-09T01:06:06.625837Z"
+  },
+  "es_madrid.jpg": {
+    "query": "Plaza Mayor Madrid",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Madrid_Plaza_Mayor_%2848733706273%29.jpg/1920px-Madrid_Plaza_Mayor_%2848733706273%29.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=4622418",
+    "fetched_at": "2026-02-09T01:08:24.247203Z"
+  },
+  "es_barcelona.jpg": {
+    "query": "Sagrada Familia",
+    "thumb_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1_%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%B9%CE%B1_2941.jpg/1920px-%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1_%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%B9%CE%B1_2941.jpg",
+    "page_url": "https://en.wikipedia.org/?curid=59545",
+    "fetched_at": "2026-02-09T01:08:26.669173Z"
+  },
+  "cz_prague.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Charles Bridge Prague.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Charles_Bridge_Prague.jpg",
+    "fetched_at": "2026-02-09T01:08:29.749893Z"
+  },
+  "au_melbourne.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Flinders st station melb.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Flinders_st_station_melb.jpg",
+    "fetched_at": "2026-02-09T01:08:31.766810Z"
+  },
+  "au_perth.jpg": {
+    "source": "wikimedia_commons",
+    "file": "Perth skyline from Kings Park May 2018.jpg",
+    "file_page": "https://commons.wikimedia.org/wiki/File:Perth_skyline_from_Kings_Park_May_2018.jpg",
+    "fetched_at": "2026-02-09T01:08:33.447706Z"
+  }
+}

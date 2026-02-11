@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container" style="max-width:1100px;margin:24px auto;padding:0 16px;">
+  <div style="display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0 0 6px 0;font-weight:800;">개인화 대시보드</h2>
+      <div style="opacity:.75;">회원 기록(선호/행동/대화) 기반으로 추천·RAG·답변이 어떻게 바뀌는지 요약</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <a class="btn btn-outline" href="{% url 'planner_index' %}" style="text-decoration:none;">플래너로</a>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:1.2fr .8fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);">
+      <div style="font-weight:800;margin-bottom:8px;">회원 프로필 요약</div>
+      <pre style="margin:0;white-space:pre-wrap;word-break:break-word;background:#f8f9fb;border:1px solid #eef0f5;border-radius:12px;padding:12px;">{{ profile_summary }}</pre>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);">
+      <div style="font-weight:800;margin-bottom:10px;">개인화 KPI</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#f8f9fb;border:1px solid #eef0f5;border-radius:12px;padding:10px;">
+          <div style="opacity:.7;font-size:12px;">미슐랭 boost</div>
+          <div style="font-weight:800;font-size:18px;">{{ kpi.michelin_boost|floatformat:2 }}</div>
+        </div>
+        <div style="background:#f8f9fb;border:1px solid #eef0f5;border-radius:12px;padding:10px;">
+          <div style="opacity:.7;font-size:12px;">랜드마크 boost</div>
+          <div style="font-weight:800;font-size:18px;">{{ kpi.landmark_boost|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;background:#f8f9fb;border:1px solid #eef0f5;border-radius:12px;padding:10px;">
+        <div style="opacity:.7;font-size:12px;margin-bottom:6px;">타입 가중치</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          {% for k,v in kpi.type_weights.items %}
+          <span style="padding:6px 10px;border-radius:999px;border:1px solid #e3e6ef;background:#fff;font-size:12px;">
+            {{ k }}: <b>{{ v|floatformat:2 }}</b>
+          </span>
+          {% empty %}
+          <span style="opacity:.7;font-size:12px;">(아직 학습 데이터가 부족합니다)</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);">
+      <div style="font-weight:800;margin-bottom:8px;">최근 행동 로그(30)</div>
+      <div style="max-height:360px;overflow:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left;font-size:12px;opacity:.75;">
+              <th style="padding:8px;border-bottom:1px solid #eee;">시간</th>
+              <th style="padding:8px;border-bottom:1px solid #eee;">타입</th>
+              <th style="padding:8px;border-bottom:1px solid #eee;">payload</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in events %}
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid #f2f2f2;font-size:12px;opacity:.8;">{{ e.created_at|date:"m/d H:i" }}</td>
+              <td style="padding:8px;border-bottom:1px solid #f2f2f2;"><b>{{ e.event_type }}</b></td>
+              <td style="padding:8px;border-bottom:1px solid #f2f2f2;font-size:12px;opacity:.85;word-break:break-word;">{{ e.payload }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="padding:10px;opacity:.7;">아직 행동 로그가 없습니다.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);">
+      <div style="font-weight:800;margin-bottom:8px;">최근 AI 답변(개인화 근거 포함)</div>
+      <div style="max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:10px;">
+        {% for m in msgs %}
+        <div style="border:1px solid #eef0f5;background:#f8f9fb;border-radius:12px;padding:10px;">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+            <div style="font-size:12px;opacity:.75;">{{ m.created_at|date:"m/d H:i" }} · plan {{ m.session.travel_plan_id }} day {{ m.session.day_number }}</div>
+            <div style="font-size:12px;opacity:.75;">LLM: {{ m.used_llm }}</div>
+          </div>
+          <div style="margin-top:6px;white-space:pre-wrap;word-break:break-word;">{{ m.content }}</div>
+        </div>
+        {% empty %}
+        <div style="opacity:.7;">아직 저장된 AI 답변이 없습니다.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);">
+    <div style="font-weight:800;margin-bottom:8px;">발표용 한 줄 요약</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span style="padding:8px 12px;border-radius:999px;border:1px solid #e3e6ef;background:#f8f9fb;">
+        ✅ 로그인 사용자만 DB에 기록 저장
+      </span>
+      <span style="padding:8px 12px;border-radius:999px;border:1px solid #e3e6ef;background:#f8f9fb;">
+        ✅ 기록 → 개인화 프로필(선호+행동로그) 생성
+      </span>
+      <span style="padding:8px 12px;border-radius:999px;border:1px solid #e3e6ef;background:#f8f9fb;">
+        ✅ 추천 비율(quota) + RAG 검색어 + LLM 프롬프트에 반영
+      </span>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{
+  "signature": "13d2b1433d488dbb574a87cf4829d1517d2ffb4898f2595ff1e318c3c07e3f47",
+  "plan_id": 1,
+  "day_number": 1,
+  "city": "서울",
+  "bullets": [
+    "• Gyeongbokgung Palace와 Bukchon Hanok Village를 방문할 때는 대중교통을 이용하여 이동하는 것이 좋으며, T-money 카드를 준비하면 편리합니다[2].",
+    "• 인기 관광지인 Gyeongbokgung Palace는 출퇴근 시간대에 혼잡할 수 있으므로, 이 시간대를 피해 방문하는 것이 좋습니다[1].",
+    "• 관광 중에는 소액 현금을 준비하여 필요할 때 사용할 수 있도록 하고, 카페나 식사 시간을 통해 충분한 휴식을 취하는 것이 중요합니다[3]."
+  ],
+  "sources": [
+    {
+      "rank": 1,
+      "score": 14.0228,
+      "doc_id": "General",
+      "title": "General Travel Tips (Common)",
+      "snippet": "# General Travel Tips (Common) 이 문서는 **특정 도시가 아니라** 대부분의 여행지에서 공통으로 적용되는 실전 팁을 정리한 자료입니다. ## Transit / 이동 - Travel transit: 가능하면 **대중교통(지하철/버스)** 을 우선으로 두고, 구간이 길면 택시/라이드쉐어를 섞어 동선을 줄입니다. - Metro / train: 출퇴근(러시아워)에는 혼잡(crowd)이 심하므로 인기 구간은 시간을 살짝 피합니다. - Naviga…"
+    },
+    {
+      "rank": 2,
+      "score": 10.6949,
+      "doc_id": "Seoul",
+      "title": "Seoul Travel Guide",
+      "snippet": "# Seoul Travel Guide Seoul is the vibrant capital of South Korea. Key attractions include Gyeongbokgung Palace, Bukchon Hanok Village, and N Seoul Tower. **Transportation**: Get a T-money card for subway, bus, and convenience store payments. The subway system…"
+    },
+    {
+      "rank": 3,
+      "score": 3.6986,
+      "doc_id": "General",
+      "title": "General Travel Tips (Common)",
+      "snippet": ". - Cash / card: 현금이 필요한 곳이 있을 수 있어 **소액 현금 + 카드** 를 함께 준비합니다. ## Weather / 컨디션 - Weather: 비/더위/추위에 대비해 우산·물·레이어드 옷을 챙깁니다. - Break: 관광(Attraction/Landmark) 사이에 카페(Cafe)나 식사(Restaurant)를 끼워 넣어 휴식 시간을 확보합니다."
+    },
+    {
+      "rank": 4,
+      "score": 2.7242,
+      "doc_id": "Bangkok",
+      "title": "Bangkok",
+      "snippet": "Bangkok quick notes: - Popular areas: Grand Palace, Wat Pho, Chinatown, Siam, Chatuchak (weekend). - Transit: BTS/MRT; taxis can be slow due to traffic. - Food: street food is great; keep cash ready. - Tips: plan temples early, carry water, and leave buffer ti…"
+    },
+    {
+      "rank": 5,
+      "score": 2.0288,
+      "doc_id": "Tokyo",
+      "title": "Tokyo",
+      "snippet": "Tokyo quick notes: - Popular areas: Shinjuku, Shibuya, Asakusa, Ginza, Akihabara. - Transit: JR + Metro; get an IC card (Suica/PASMO). - Food: ramen, sushi, izakaya; queue times peak at 12:00 and 18:00. - Tips: book observation decks, arrive early at temples,…"
+    }
+  ],
+  "generated_at": "2026-02-10T04:21:47.715069Z",
+  "used_llm": true
+}
