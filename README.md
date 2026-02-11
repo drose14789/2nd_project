@@ -30,12 +30,12 @@
 [![PPTX](https://img.shields.io/badge/Presentation-PPTX-blue)](https://github.com/user-attachments/files/24443148/2nd_project.3조_AI에어_프로젝트_발표.pptx)
 
 ## 📑 목차
-[01. 프로젝트 개요](https://github.com/drose14789/1st_project?tab=readme-ov-file#project-overview)<br>
-[02. 데이터 개요 및 전처리](https://github.com/drose14789/1st_project?tab=readme-ov-file#data-processing)<br>
-[03. 머신러닝 모델 구현](https://github.com/drose14789/1st_project?tab=readme-ov-file#model-implementation)<br>
-[04. LLM + RAG 구현](https://github.com/drose14789/1st_project?tab=readme-ov-file#web-page-implementation)<br>
-[05. 웹서비스 UI 시연](https://github.com/drose14789/1st_project?tab=readme-ov-file#project-result)<br>
-[06. 최종 결과 및 결론](https://github.com/drose14789/1st_project?tab=readme-ov-file#project-result)<br>
+[01. 프로젝트 개요](https://github.com/drose14789/2nd_project?tab=readme-ov-file#project-overview)<br>
+[02. 데이터 개요 및 전처리](https://github.com/drose14789/2nd_project?tab=readme-ov-file#data-processing)<br>
+[03. 머신러닝 모델 구현](https://github.com/drose14789/2nd_project?tab=readme-ov-file#model-implementation)<br>
+[04. LLM + RAG 구현](https://github.com/drose14789/2nd_project?tab=readme-ov-file#web-page-implementation)<br>
+[05. 웹서비스 UI 시연](https://github.com/drose14789/2nd_project?tab=readme-ov-file#project-result)<br>
+[06. 최종 결과 및 결론](https://github.com/drose14789/2nd_project?tab=readme-ov-file#project-result)<br>
 ## Project Overview
 
 <img width="1200" height="675" alt="Image" src="https://github.com/user-attachments/assets/10c57bac-1459-4c79-94be-60225334b1d0" />
