@@ -88,7 +88,7 @@
 
 <div>
 
-[![Demo vid](https://img.youtube.com/vi/E3Ve6HJy064/0.jpg)](youtube.com/E3Ve6HJy064?si=R0hc--VvyIJjuXZ_)
+[![Demo vid](https://img.youtube.com/vi/E3Ve6HJy064/0.jpg)](https://www.youtube.com/watch?v=E3Ve6HJy064)
 *클릭하면 데모 영상을 볼 수 있습니다.*
 
 
