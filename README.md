@@ -27,7 +27,7 @@
 	  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black">
 	</div>
 
-[![PPTX](https://img.shields.io/badge/Presentation-PPTX-blue)](https://github.com/drose14789/2nd_project/blob/master/etc/3조_AI에어_프로젝트_발표.pptx)
+[![PPTX](https://img.shields.io/badge/Presentation-PPTX-blue)](https://raw.githubusercontent.com/drose14789/2nd_project/master/etc/3%EC%A1%B0_AI%EC%97%90%EC%96%B4_%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8_%EB%B0%9C%ED%91%9C.pptx)
 
 ## 📑 목차
 [01. 프로젝트 개요](https://github.com/drose14789/2nd_project?tab=readme-ov-file#project-overview)<br>
